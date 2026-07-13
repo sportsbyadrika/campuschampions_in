@@ -35,3 +35,30 @@ $router->get('/profile',          'ProfileController@show',           ['auth']);
 $router->post('/profile',         'ProfileController@update',         ['auth']);
 $router->get('/change-password',  'ProfileController@showPassword',   ['auth']);
 $router->post('/change-password', 'ProfileController@updatePassword', ['auth']);
+
+// ---------------------------------------------------------------------
+// Master data (CRUD) — controller enforces view/manage role checks
+// ---------------------------------------------------------------------
+/**
+ * Register the standard CRUD route set for a resource.
+ * GET  /res            list
+ * GET  /res/export     CSV
+ * GET  /res/{id}/edit  fetch one (JSON)
+ * POST /res            create
+ * PUT  /res/{id}       update
+ * DELETE /res/{id}     delete
+ */
+$crud = function (string $path, string $controller) use ($router): void {
+    $router->get("/$path",             "$controller@index",   ['auth']);
+    $router->get("/$path/export",      "$controller@export",  ['auth']);
+    $router->get("/$path/{id}/edit",   "$controller@find",    ['auth']);
+    $router->post("/$path",            "$controller@store",   ['auth']);
+    $router->put("/$path/{id}",        "$controller@update",  ['auth']);
+    $router->delete("/$path/{id}",     "$controller@destroy", ['auth']);
+};
+
+$crud('courses',                 'CourseController');
+$crud('divisions',               'DivisionController');
+$crud('houses',                  'HouseController');
+$crud('course-category-groups',  'CourseCategoryGroupController');
+$crud('users',                   'UserController');

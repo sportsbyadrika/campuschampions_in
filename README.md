@@ -105,8 +105,10 @@ campuschampions_in/
 - [x] **Phase 1 — Foundation**: MVC core, routing, DB schema, auth (login/logout/
       password reset/change), RBAC, rate limiting, layout + navigation, dashboard,
       profile, error pages, CSV + audit infrastructure.
-- [ ] Phase 2 — Master data (courses, divisions, houses, category groups, users) with
-      modal CRUD, search/filter/pagination, CSV export.
+- [x] **Phase 2 — Master data**: reusable CRUD engine (modal add/edit, delete
+      confirmation, real-time-ready search, dropdown filters, per-page pagination,
+      CSV export, audit) powering courses, divisions, houses, course category groups
+      and users (with password hashing + role/campus rules).
 - [ ] Phase 3 — Institutions (super admin) + contestants (incl. bulk upload).
 - [ ] Phase 4 — Meets → disciplines → events → categories → instances; registrations.
 - [ ] Phase 5 — Result entry, points, championship standings.
