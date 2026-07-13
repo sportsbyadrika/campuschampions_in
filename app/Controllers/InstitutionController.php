@@ -30,6 +30,7 @@ class InstitutionController extends CrudController
             'route'        => 'institutions',
             'icon'         => 'fa-building-columns',
             'showCampus'   => false,
+            'formColumns'  => 2,
             'columns' => [
                 ['key' => 'name', 'label' => 'Name'],
                 ['key' => 'contact_email', 'label' => 'Contact Email'],
@@ -39,7 +40,7 @@ class InstitutionController extends CrudController
                 ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
             ],
             'fields' => [
-                ['name' => 'name', 'label' => 'Institution Name', 'type' => 'text', 'required' => true],
+                ['name' => 'name', 'label' => 'Institution Name', 'type' => 'text', 'required' => true, 'full' => true],
                 ['name' => 'address', 'label' => 'Address', 'type' => 'textarea'],
                 ['name' => 'contact_email', 'label' => 'Contact Email', 'type' => 'email'],
                 ['name' => 'contact_phone', 'label' => 'Contact Phone', 'type' => 'text'],

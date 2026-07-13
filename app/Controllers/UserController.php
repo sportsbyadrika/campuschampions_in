@@ -69,6 +69,7 @@ class UserController extends CrudController
             'route'        => 'users',
             'icon'         => 'fa-users',
             'showCampus'   => true,
+            'formColumns'  => 2,
             'columns' => [
                 ['key' => 'full_name', 'label' => 'Name'],
                 ['key' => 'email', 'label' => 'Email'],

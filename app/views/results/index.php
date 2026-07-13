@@ -30,7 +30,15 @@
             </tr></thead>
             <tbody>
                 <?php if (empty($instances)): ?>
-                    <tr><td colspan="8" class="text-center py-10 text-slate-400"><i class="fa-solid fa-inbox text-2xl mb-2 block"></i>No event instances found.</td></tr>
+                    <tr><td colspan="8" class="text-center py-10 text-slate-400">
+                        <i class="fa-solid fa-inbox text-2xl mb-2 block"></i>
+                        <?php if (\App\Core\Auth::role() === 'event_user'): ?>
+                            You have no assigned events yet.
+                            <div class="text-xs mt-1">Ask your campus admin to assign you to event instances — assigned events will appear here for result entry.</div>
+                        <?php else: ?>
+                            No event instances found<?= (int) $meetId > 0 ? ' for the selected meet' : '' ?>.
+                        <?php endif; ?>
+                    </td></tr>
                 <?php else: foreach ($instances as $i): ?>
                     <tr>
                         <td class="font-medium"><?= e($i['label']) ?></td>
