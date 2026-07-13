@@ -153,6 +153,8 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
 
     public static $classMap = array (
         'App\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/AuthController.php',
+        'App\\Controllers\\ContestantBulkController' => __DIR__ . '/../..' . '/app/Controllers/ContestantBulkController.php',
+        'App\\Controllers\\ContestantController' => __DIR__ . '/../..' . '/app/Controllers/ContestantController.php',
         'App\\Controllers\\CourseCategoryGroupController' => __DIR__ . '/../..' . '/app/Controllers/CourseCategoryGroupController.php',
         'App\\Controllers\\CourseController' => __DIR__ . '/../..' . '/app/Controllers/CourseController.php',
         'App\\Controllers\\CrudController' => __DIR__ . '/../..' . '/app/Controllers/CrudController.php',
@@ -160,6 +162,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Controllers\\DivisionController' => __DIR__ . '/../..' . '/app/Controllers/DivisionController.php',
         'App\\Controllers\\HomeController' => __DIR__ . '/../..' . '/app/Controllers/HomeController.php',
         'App\\Controllers\\HouseController' => __DIR__ . '/../..' . '/app/Controllers/HouseController.php',
+        'App\\Controllers\\InstitutionController' => __DIR__ . '/../..' . '/app/Controllers/InstitutionController.php',
         'App\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Controllers/ProfileController.php',
         'App\\Controllers\\PublicController' => __DIR__ . '/../..' . '/app/Controllers/PublicController.php',
         'App\\Controllers\\UserController' => __DIR__ . '/../..' . '/app/Controllers/UserController.php',
@@ -171,6 +174,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Core\\Csv' => __DIR__ . '/../..' . '/app/Core/Csv.php',
         'App\\Core\\Database' => __DIR__ . '/../..' . '/app/Core/Database.php',
         'App\\Core\\ErrorHandler' => __DIR__ . '/../..' . '/app/Core/ErrorHandler.php',
+        'App\\Core\\FileUpload' => __DIR__ . '/../..' . '/app/Core/FileUpload.php',
         'App\\Core\\Flash' => __DIR__ . '/../..' . '/app/Core/Flash.php',
         'App\\Core\\Mailer' => __DIR__ . '/../..' . '/app/Core/Mailer.php',
         'App\\Core\\Middleware' => __DIR__ . '/../..' . '/app/Core/Middleware.php',
@@ -180,6 +184,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Core\\Session' => __DIR__ . '/../..' . '/app/Core/Session.php',
         'App\\Core\\Validator' => __DIR__ . '/../..' . '/app/Core/Validator.php',
         'App\\Core\\View' => __DIR__ . '/../..' . '/app/Core/View.php',
+        'App\\Models\\ContestantMaster' => __DIR__ . '/../..' . '/app/Models/ContestantMaster.php',
         'App\\Models\\Course' => __DIR__ . '/../..' . '/app/Models/Course.php',
         'App\\Models\\CourseCategoryGroup' => __DIR__ . '/../..' . '/app/Models/CourseCategoryGroup.php',
         'App\\Models\\Division' => __DIR__ . '/../..' . '/app/Models/Division.php',

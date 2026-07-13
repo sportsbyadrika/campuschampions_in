@@ -23,6 +23,9 @@ $route = $cfg['route'];
         </div>
     </div>
     <div class="flex items-center gap-2">
+        <?php foreach (($cfg['extraActions'] ?? []) as $action): if (!empty($action['manage']) && !$canManage) continue; ?>
+            <a href="<?= e(url($action['url'])) ?>" class="btn btn-secondary"><i class="fa-solid <?= e($action['icon']) ?>"></i> <?= e($action['label']) ?></a>
+        <?php endforeach; ?>
         <a href="<?= e(url($route . '/export?' . http_build_query($_GET))) ?>" class="btn btn-secondary">
             <i class="fa-solid fa-file-csv"></i> Export CSV
         </a>

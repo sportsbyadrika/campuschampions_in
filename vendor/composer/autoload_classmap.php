@@ -7,6 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Controllers\\AuthController' => $baseDir . '/app/Controllers/AuthController.php',
+    'App\\Controllers\\ContestantBulkController' => $baseDir . '/app/Controllers/ContestantBulkController.php',
+    'App\\Controllers\\ContestantController' => $baseDir . '/app/Controllers/ContestantController.php',
     'App\\Controllers\\CourseCategoryGroupController' => $baseDir . '/app/Controllers/CourseCategoryGroupController.php',
     'App\\Controllers\\CourseController' => $baseDir . '/app/Controllers/CourseController.php',
     'App\\Controllers\\CrudController' => $baseDir . '/app/Controllers/CrudController.php',
@@ -14,6 +16,7 @@ return array(
     'App\\Controllers\\DivisionController' => $baseDir . '/app/Controllers/DivisionController.php',
     'App\\Controllers\\HomeController' => $baseDir . '/app/Controllers/HomeController.php',
     'App\\Controllers\\HouseController' => $baseDir . '/app/Controllers/HouseController.php',
+    'App\\Controllers\\InstitutionController' => $baseDir . '/app/Controllers/InstitutionController.php',
     'App\\Controllers\\ProfileController' => $baseDir . '/app/Controllers/ProfileController.php',
     'App\\Controllers\\PublicController' => $baseDir . '/app/Controllers/PublicController.php',
     'App\\Controllers\\UserController' => $baseDir . '/app/Controllers/UserController.php',
@@ -25,6 +28,7 @@ return array(
     'App\\Core\\Csv' => $baseDir . '/app/Core/Csv.php',
     'App\\Core\\Database' => $baseDir . '/app/Core/Database.php',
     'App\\Core\\ErrorHandler' => $baseDir . '/app/Core/ErrorHandler.php',
+    'App\\Core\\FileUpload' => $baseDir . '/app/Core/FileUpload.php',
     'App\\Core\\Flash' => $baseDir . '/app/Core/Flash.php',
     'App\\Core\\Mailer' => $baseDir . '/app/Core/Mailer.php',
     'App\\Core\\Middleware' => $baseDir . '/app/Core/Middleware.php',
@@ -34,6 +38,7 @@ return array(
     'App\\Core\\Session' => $baseDir . '/app/Core/Session.php',
     'App\\Core\\Validator' => $baseDir . '/app/Core/Validator.php',
     'App\\Core\\View' => $baseDir . '/app/Core/View.php',
+    'App\\Models\\ContestantMaster' => $baseDir . '/app/Models/ContestantMaster.php',
     'App\\Models\\Course' => $baseDir . '/app/Models/Course.php',
     'App\\Models\\CourseCategoryGroup' => $baseDir . '/app/Models/CourseCategoryGroup.php',
     'App\\Models\\Division' => $baseDir . '/app/Models/Division.php',

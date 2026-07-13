@@ -62,3 +62,13 @@ $crud('divisions',               'DivisionController');
 $crud('houses',                  'HouseController');
 $crud('course-category-groups',  'CourseCategoryGroupController');
 $crud('users',                   'UserController');
+$crud('institutions',            'InstitutionController');
+
+// Contestant bulk upload (register BEFORE the generic contestant CRUD so the
+// literal /contestants/bulk* paths are not shadowed).
+$router->get('/contestants/bulk',            'ContestantBulkController@form',     ['auth']);
+$router->get('/contestants/bulk/template',   'ContestantBulkController@template', ['auth']);
+$router->post('/contestants/bulk/preview',   'ContestantBulkController@preview',  ['auth']);
+$router->post('/contestants/bulk/import',    'ContestantBulkController@import',   ['auth']);
+
+$crud('contestants',             'ContestantController');

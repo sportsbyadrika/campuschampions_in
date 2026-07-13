@@ -109,7 +109,10 @@ campuschampions_in/
       confirmation, real-time-ready search, dropdown filters, per-page pagination,
       CSV export, audit) powering courses, divisions, houses, course category groups
       and users (with password hashing + role/campus rules).
-- [ ] Phase 3 — Institutions (super admin) + contestants (incl. bulk upload).
+- [x] **Phase 3 — Institutions + Contestants**: super-admin institution management
+      (subscription periods); full contestant CRUD with FK dropdowns, validated photo
+      upload (type/size/dimension checks), and a separate bulk-upload page
+      (CSV template → validated preview → import).
 - [ ] Phase 4 — Meets → disciplines → events → categories → instances; registrations.
 - [ ] Phase 5 — Result entry, points, championship standings.
 - [ ] Phase 6 — Certificate templates + PDF generation (Dompdf).
