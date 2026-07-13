@@ -72,3 +72,24 @@ $router->post('/contestants/bulk/preview',   'ContestantBulkController@preview',
 $router->post('/contestants/bulk/import',    'ContestantBulkController@import',   ['auth']);
 
 $crud('contestants',             'ContestantController');
+$crud('meets',                   'MeetController');
+
+// ---------------------------------------------------------------------
+// Meet setup hub (disciplines, categories, events, instances, points)
+// ---------------------------------------------------------------------
+$router->get('/meets/{meetId}/setup', 'MeetSetupController@show', ['auth']);
+$router->post('/meets/{meetId}/points', 'MeetSetupController@savePoints', ['auth']);
+
+foreach (['disciplines' => 'Discipline', 'categories' => 'Category', 'events' => 'Event', 'instances' => 'Instance'] as $seg => $suffix) {
+    $router->post("/meets/{meetId}/$seg",       "MeetSetupController@store$suffix",  ['auth']);
+    $router->put("/meets/{meetId}/$seg/{id}",   "MeetSetupController@update$suffix", ['auth']);
+    $router->delete("/meets/{meetId}/$seg/{id}", "MeetSetupController@delete$suffix", ['auth']);
+}
+
+// ---------------------------------------------------------------------
+// Event instance registrations
+// ---------------------------------------------------------------------
+$router->get('/instances/{instanceId}/registrations', 'RegistrationController@show', ['auth']);
+$router->post('/instances/{instanceId}/registrations', 'RegistrationController@store', ['auth']);
+$router->put('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@updateStatus', ['auth']);
+$router->delete('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@destroy', ['auth']);

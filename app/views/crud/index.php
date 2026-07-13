@@ -109,6 +109,9 @@ $route = $cfg['route'];
                         <?php if ($showCampus): ?><td><?= e($row['campus_name'] ?? '') ?></td><?php endif; ?>
                         <?php if ($canManage): ?>
                         <td class="text-right whitespace-nowrap">
+                            <?php if (!empty($cfg['rowLink'])): ?>
+                                <a href="<?= e(url(str_replace('{id}', (string) (int) $row['id'], $cfg['rowLink']['urlPattern']))) ?>" class="text-slate-500 hover:text-primary px-2" title="<?= e($cfg['rowLink']['title'] ?? 'Open') ?>"><i class="fa-solid <?= e($cfg['rowLink']['icon']) ?>"></i></a>
+                            <?php endif; ?>
                             <button type="button" class="text-slate-500 hover:text-primary px-2" data-crud-edit="<?= (int) $row['id'] ?>" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button type="button" class="text-slate-500 hover:text-rose-600 px-2" data-crud-delete="<?= (int) $row['id'] ?>" title="Delete"><i class="fa-solid fa-trash"></i></button>
                         </td>

@@ -113,7 +113,10 @@ campuschampions_in/
       (subscription periods); full contestant CRUD with FK dropdowns, validated photo
       upload (type/size/dimension checks), and a separate bulk-upload page
       (CSV template → validated preview → import).
-- [ ] Phase 4 — Meets → disciplines → events → categories → instances; registrations.
+- [x] **Phase 4 — Meets & event hierarchy**: meet CRUD plus a per-meet setup hub
+      (tabs for points, disciplines, categories, events, event instances) with
+      ownership-checked AJAX CRUD, and contestant registration management per event
+      instance (register/confirm/cancel/remove).
 - [ ] Phase 5 — Result entry, points, championship standings.
 - [ ] Phase 6 — Certificate templates + PDF generation (Dompdf).
 - [ ] Phase 7 — Public results page, caching, system reports, audit log viewer.
