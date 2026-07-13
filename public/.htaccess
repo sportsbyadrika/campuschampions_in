@@ -1,0 +1,32 @@
+# Campus Champions - public/.htaccess
+# Front-controller routing: send every non-file request to index.php.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If the app is installed in a subfolder, uncomment and set the base:
+    # RewriteBase /
+
+    # Do not rewrite existing files or directories (assets, uploads, etc.)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route all other requests to the front controller
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect uploaded files from being executed as PHP
+<Directory "assets/uploads">
+    php_flag engine off
+</Directory>

@@ -1,0 +1,21 @@
+# Campus Champions - root .htaccess
+# On shared hosting where the document root is the project root (not /public),
+# this rewrites all requests into the public/ folder. If you can point your
+# document root directly at /public, this file is not needed.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct access to sensitive folders
+    RewriteRule ^(app|config|database|storage|vendor)/ - [F,L]
+    RewriteRule ^(\.env|composer\.(json|lock)) - [F,L]
+
+    # Send everything into /public
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Deny access to dotfiles
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
