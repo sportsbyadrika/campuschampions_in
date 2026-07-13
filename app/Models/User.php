@@ -9,7 +9,9 @@ use App\Core\Model;
 class User extends Model
 {
     protected string $table = 'users';
-    protected bool $campusScoped = false; // scoping handled explicitly per role
+    // Campus-scoped so campus admins only see/manage their own campus users.
+    // Super admin (campus_id = null) is unscoped and sees everyone.
+    protected bool $campusScoped = true;
     protected array $fillable = [
         'email', 'password', 'full_name', 'role', 'campus_id',
         'status', 'last_login', 'reset_token', 'reset_token_expiry',

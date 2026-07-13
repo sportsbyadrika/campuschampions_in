@@ -35,3 +35,95 @@ $router->get('/profile',          'ProfileController@show',           ['auth']);
 $router->post('/profile',         'ProfileController@update',         ['auth']);
 $router->get('/change-password',  'ProfileController@showPassword',   ['auth']);
 $router->post('/change-password', 'ProfileController@updatePassword', ['auth']);
+
+// ---------------------------------------------------------------------
+// Master data (CRUD) — controller enforces view/manage role checks
+// ---------------------------------------------------------------------
+/**
+ * Register the standard CRUD route set for a resource.
+ * GET  /res            list
+ * GET  /res/export     CSV
+ * GET  /res/{id}/edit  fetch one (JSON)
+ * POST /res            create
+ * PUT  /res/{id}       update
+ * DELETE /res/{id}     delete
+ */
+$crud = function (string $path, string $controller) use ($router): void {
+    $router->get("/$path",             "$controller@index",   ['auth']);
+    $router->get("/$path/export",      "$controller@export",  ['auth']);
+    $router->get("/$path/{id}/edit",   "$controller@find",    ['auth']);
+    $router->post("/$path",            "$controller@store",   ['auth']);
+    $router->put("/$path/{id}",        "$controller@update",  ['auth']);
+    $router->delete("/$path/{id}",     "$controller@destroy", ['auth']);
+};
+
+$crud('courses',                 'CourseController');
+$crud('divisions',               'DivisionController');
+$crud('houses',                  'HouseController');
+$crud('course-category-groups',  'CourseCategoryGroupController');
+$crud('users',                   'UserController');
+$crud('institutions',            'InstitutionController');
+
+// Contestant bulk upload (register BEFORE the generic contestant CRUD so the
+// literal /contestants/bulk* paths are not shadowed).
+$router->get('/contestants/bulk',            'ContestantBulkController@form',     ['auth']);
+$router->get('/contestants/bulk/template',   'ContestantBulkController@template', ['auth']);
+$router->post('/contestants/bulk/preview',   'ContestantBulkController@preview',  ['auth']);
+$router->post('/contestants/bulk/import',    'ContestantBulkController@import',   ['auth']);
+
+$crud('contestants',             'ContestantController');
+$crud('meets',                   'MeetController');
+
+// ---------------------------------------------------------------------
+// Meet setup hub (disciplines, categories, events, instances, points)
+// ---------------------------------------------------------------------
+$router->get('/meets/{meetId}/setup', 'MeetSetupController@show', ['auth']);
+$router->post('/meets/{meetId}/points', 'MeetSetupController@savePoints', ['auth']);
+
+foreach (['disciplines' => 'Discipline', 'categories' => 'Category', 'events' => 'Event', 'instances' => 'Instance'] as $seg => $suffix) {
+    $router->post("/meets/{meetId}/$seg",       "MeetSetupController@store$suffix",  ['auth']);
+    $router->put("/meets/{meetId}/$seg/{id}",   "MeetSetupController@update$suffix", ['auth']);
+    $router->delete("/meets/{meetId}/$seg/{id}", "MeetSetupController@delete$suffix", ['auth']);
+}
+
+// ---------------------------------------------------------------------
+// Event instance registrations
+// ---------------------------------------------------------------------
+$router->get('/instances/{instanceId}/registrations', 'RegistrationController@show', ['auth']);
+$router->post('/instances/{instanceId}/registrations', 'RegistrationController@store', ['auth']);
+$router->put('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@updateStatus', ['auth']);
+$router->delete('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@destroy', ['auth']);
+
+// ---------------------------------------------------------------------
+// Results & result entry
+// ---------------------------------------------------------------------
+$router->get('/results',                        'ResultController@index',      ['auth']);
+$router->get('/results/{instanceId}/entry',     'ResultController@entry',      ['auth']);
+$router->post('/results/{instanceId}/save',     'ResultController@save',       ['auth']);
+$router->get('/results/{instanceId}/export',    'ResultController@export',     ['auth']);
+$router->get('/results/{instanceId}/assign',    'ResultController@assignForm', ['auth']);
+$router->post('/results/{instanceId}/assign',   'ResultController@assign',     ['auth']);
+$router->delete('/results/{instanceId}/assign/{assignmentId}', 'ResultController@unassign', ['auth']);
+
+// ---------------------------------------------------------------------
+// Championship standings
+// ---------------------------------------------------------------------
+$router->get('/standings',                'StandingsController@index',  ['auth']);
+$router->get('/standings/export/{type}',  'StandingsController@export', ['auth']);
+
+// ---------------------------------------------------------------------
+// Certificates
+// ---------------------------------------------------------------------
+$crud('certificate-templates', 'CertificateTemplateController');
+
+$router->get('/certificates',                        'CertificateController@index',        ['auth']);
+$router->get('/certificates/download/{certId}',      'CertificateController@download',      ['auth']);
+$router->get('/certificates/{instanceId}/generate',  'CertificateController@generateForm',  ['auth']);
+$router->post('/certificates/{instanceId}/generate', 'CertificateController@generate',      ['auth']);
+
+// ---------------------------------------------------------------------
+// Audit logs & system reports (Super Admin)
+// ---------------------------------------------------------------------
+$router->get('/audit-logs',        'AuditLogController@index',  ['role:super_admin']);
+$router->get('/audit-logs/export', 'AuditLogController@export', ['role:super_admin']);
+$router->get('/reports',           'ReportsController@index',   ['role:super_admin']);

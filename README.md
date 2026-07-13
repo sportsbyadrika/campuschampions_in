@@ -105,13 +105,33 @@ campuschampions_in/
 - [x] **Phase 1 — Foundation**: MVC core, routing, DB schema, auth (login/logout/
       password reset/change), RBAC, rate limiting, layout + navigation, dashboard,
       profile, error pages, CSV + audit infrastructure.
-- [ ] Phase 2 — Master data (courses, divisions, houses, category groups, users) with
-      modal CRUD, search/filter/pagination, CSV export.
-- [ ] Phase 3 — Institutions (super admin) + contestants (incl. bulk upload).
-- [ ] Phase 4 — Meets → disciplines → events → categories → instances; registrations.
-- [ ] Phase 5 — Result entry, points, championship standings.
-- [ ] Phase 6 — Certificate templates + PDF generation (Dompdf).
-- [ ] Phase 7 — Public results page, caching, system reports, audit log viewer.
+- [x] **Phase 2 — Master data**: reusable CRUD engine (modal add/edit, delete
+      confirmation, real-time-ready search, dropdown filters, per-page pagination,
+      CSV export, audit) powering courses, divisions, houses, course category groups
+      and users (with password hashing + role/campus rules).
+- [x] **Phase 3 — Institutions + Contestants**: super-admin institution management
+      (subscription periods); full contestant CRUD with FK dropdowns, validated photo
+      upload (type/size/dimension checks), and a separate bulk-upload page
+      (CSV template → validated preview → import).
+- [x] **Phase 4 — Meets & event hierarchy**: meet CRUD plus a per-meet setup hub
+      (tabs for points, disciplines, categories, events, event instances) with
+      ownership-checked AJAX CRUD, and contestant registration management per event
+      instance (register/confirm/cancel/remove).
+- [x] **Phase 5 — Results & standings**: result-entry grid per event instance
+      (position → auto-filled points with per-row override, remarks, transactional
+      save), event-user assignment enforcement (event users only enter results for
+      assigned instances), per-instance results CSV, and championship standings
+      (house points with bars + individual leaderboard with medal counts, exportable).
+- [x] **Phase 6 — Certificates**: certificate template CRUD (HTML body with
+      `{{placeholders}}`), and a generation page per event instance that selects a
+      template + contestants (with results), renders XSS-safe HTML, and produces
+      downloadable A4 landscape PDFs via Dompdf, tracked in the certificates table
+      with unique certificate numbers.
+- [x] **Phase 7 — Public page, reports & audit**: public results page (no login)
+      with search (contestant / unique # / event), meet/category/position filters,
+      pagination, print styles, and file-based caching; super-admin system reports
+      (platform totals, per-institution breakdown, CSV exports) and an audit-log
+      viewer with filters + CSV export.
 
 ---
 

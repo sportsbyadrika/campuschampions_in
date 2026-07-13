@@ -77,6 +77,9 @@ $user = Auth::user();
                         <a href="<?= e(url('results')) ?>" class="nav-link <?= active_if('/results') ?>">
                             <i class="fa-solid fa-ranking-star mr-1.5"></i>Results
                         </a>
+                        <a href="<?= e(url('certificates')) ?>" class="nav-link <?= active_if('/certificate') ?>">
+                            <i class="fa-solid fa-award mr-1.5"></i>Certificates
+                        </a>
                     <?php endif; ?>
 
                     <a href="<?= e(url('standings')) ?>" class="nav-link <?= active_if('/standings') ?>">
@@ -84,6 +87,9 @@ $user = Auth::user();
                     </a>
 
                     <?php if (can('super_admin')): ?>
+                        <a href="<?= e(url('reports')) ?>" class="nav-link <?= active_if('/reports') ?>">
+                            <i class="fa-solid fa-chart-line mr-1.5"></i>Reports
+                        </a>
                         <a href="<?= e(url('audit-logs')) ?>" class="nav-link <?= active_if('/audit-logs') ?>">
                             <i class="fa-solid fa-clipboard-list mr-1.5"></i>Audit
                         </a>
