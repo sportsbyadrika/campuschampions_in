@@ -49,6 +49,7 @@ class ContestantController extends CrudController
             'route'        => 'contestants',
             'icon'         => 'fa-user-group',
             'showCampus'   => true,
+            'formColumns'  => 3,
             'extraActions' => [
                 ['label' => 'Bulk Upload', 'url' => 'contestants/bulk', 'icon' => 'fa-file-arrow-up', 'manage' => true],
             ],

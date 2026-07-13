@@ -129,23 +129,33 @@ $route = $cfg['route'];
 
 <?php if ($canManage): ?>
 <!-- ============ Add/Edit Modal ============ -->
+<?php
+$formCols = (int) ($cfg['formColumns'] ?? 1);
+if ($formCols < 1) { $formCols = 1; }
+// Wider panel for multi-column forms
+$panelWidth = $formCols >= 3 ? 'max-width:56rem' : ($formCols === 2 ? 'max-width:46rem' : '');
+$gridClass  = $formCols > 1 ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-{$formCols} gap-x-4 gap-y-4" : 'space-y-4';
+$spanFull   = $formCols > 1 ? "sm:col-span-2 md:col-span-{$formCols}" : '';
+?>
 <div id="crudModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="crudModalTitle">
-    <div class="modal-panel" role="document">
+    <div class="modal-panel" role="document" <?= $panelWidth ? 'style="' . $panelWidth . '"' : '' ?>>
         <form id="crudForm" novalidate>
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
                 <h2 id="crudModalTitle" class="text-lg font-semibold text-slate-900">Add <?= e($cfg['entity']) ?></h2>
                 <button type="button" class="text-slate-400 hover:text-slate-600" data-modal-close><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="px-6 py-5 space-y-4">
-                <input type="hidden" name="id" id="crudId" value="">
+            <input type="hidden" name="id" id="crudId" value="">
+            <div class="px-6 py-5 <?= $gridClass ?>">
                 <?php foreach ($cfg['fields'] as $field):
                     $name = $field['name'];
                     $req = !empty($field['required']);
+                    // Textareas and fields flagged 'full' span the whole row
+                    $cellSpan = ($field['type'] === 'textarea' || !empty($field['full'])) ? $spanFull : '';
                 ?>
-                    <div>
+                    <div class="<?= $cellSpan ?>">
                         <label class="form-label" for="f_<?= e($name) ?>"><?= e($field['label']) ?><?= $req ? ' <span class="text-rose-500">*</span>' : '' ?></label>
                         <?php if ($field['type'] === 'textarea'): ?>
-                            <textarea id="f_<?= e($name) ?>" name="<?= e($name) ?>" rows="3" class="form-textarea" data-field="<?= e($name) ?>"></textarea>
+                            <textarea id="f_<?= e($name) ?>" name="<?= e($name) ?>" rows="2" class="form-textarea" data-field="<?= e($name) ?>"></textarea>
                         <?php elseif ($field['type'] === 'select'): ?>
                             <select id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-select" data-field="<?= e($name) ?>">
                                 <?php foreach ($field['options'] as $val => $label): ?>
