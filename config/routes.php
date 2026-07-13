@@ -93,3 +93,20 @@ $router->get('/instances/{instanceId}/registrations', 'RegistrationController@sh
 $router->post('/instances/{instanceId}/registrations', 'RegistrationController@store', ['auth']);
 $router->put('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@updateStatus', ['auth']);
 $router->delete('/instances/{instanceId}/registrations/{regId}', 'RegistrationController@destroy', ['auth']);
+
+// ---------------------------------------------------------------------
+// Results & result entry
+// ---------------------------------------------------------------------
+$router->get('/results',                        'ResultController@index',      ['auth']);
+$router->get('/results/{instanceId}/entry',     'ResultController@entry',      ['auth']);
+$router->post('/results/{instanceId}/save',     'ResultController@save',       ['auth']);
+$router->get('/results/{instanceId}/export',    'ResultController@export',     ['auth']);
+$router->get('/results/{instanceId}/assign',    'ResultController@assignForm', ['auth']);
+$router->post('/results/{instanceId}/assign',   'ResultController@assign',     ['auth']);
+$router->delete('/results/{instanceId}/assign/{assignmentId}', 'ResultController@unassign', ['auth']);
+
+// ---------------------------------------------------------------------
+// Championship standings
+// ---------------------------------------------------------------------
+$router->get('/standings',                'StandingsController@index',  ['auth']);
+$router->get('/standings/export/{type}',  'StandingsController@export', ['auth']);

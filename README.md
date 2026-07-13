@@ -117,7 +117,11 @@ campuschampions_in/
       (tabs for points, disciplines, categories, events, event instances) with
       ownership-checked AJAX CRUD, and contestant registration management per event
       instance (register/confirm/cancel/remove).
-- [ ] Phase 5 — Result entry, points, championship standings.
+- [x] **Phase 5 — Results & standings**: result-entry grid per event instance
+      (position → auto-filled points with per-row override, remarks, transactional
+      save), event-user assignment enforcement (event users only enter results for
+      assigned instances), per-instance results CSV, and championship standings
+      (house points with bars + individual leaderboard with medal counts, exportable).
 - [ ] Phase 6 — Certificate templates + PDF generation (Dompdf).
 - [ ] Phase 7 — Public results page, caching, system reports, audit log viewer.
 
