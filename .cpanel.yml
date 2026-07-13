@@ -1,0 +1,43 @@
+---
+# cPanel Git™ Version Control deployment configuration.
+#
+# When you click "Deploy HEAD Commit" in cPanel (or push to the deployed
+# branch), cPanel checks out the repository at
+#   /home/olympicd/repositories/campuschampions.in
+# and runs the tasks below from that directory. The tasks copy the working
+# tree into the live document root.
+#
+# Preserved on the server (never overwritten/removed by a deploy):
+#   - .env                         (your real credentials)
+#   - public/assets/uploads/**     (uploaded photos & generated certificates)
+#   - storage/logs, storage/cache  (runtime files)
+
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/olympicd/campuschampions.in
+    - /bin/mkdir -p "$DEPLOYPATH"
+
+    # Sync the codebase into the document root.
+    #  -a         : preserve perms/timestamps, recurse
+    #  (no --delete: we never remove server-side files, so uploads/.env are safe)
+    #  --exclude  : keep environment, VCS, runtime and uploaded data untouched
+    - >-
+      /usr/bin/rsync -a
+      --exclude='.git'
+      --exclude='.gitignore'
+      --exclude='.gitattributes'
+      --exclude='.cpanel.yml'
+      --exclude='.env'
+      --exclude='public/assets/uploads/'
+      --exclude='storage/logs/'
+      --exclude='storage/cache/'
+      ./ "$DEPLOYPATH/"
+
+    # Make sure runtime + upload directories exist and are writable.
+    - /bin/mkdir -p "$DEPLOYPATH/storage/logs" "$DEPLOYPATH/storage/cache"
+    - /bin/mkdir -p "$DEPLOYPATH/public/assets/uploads/contestants" "$DEPLOYPATH/public/assets/uploads/certificates"
+    - /bin/chmod -R 0775 "$DEPLOYPATH/storage" "$DEPLOYPATH/public/assets/uploads"
+
+    # First-time only: if no .env exists yet on the server, seed it from the
+    # example so the app can boot. Existing .env files are left untouched.
+    - /bin/sh -c 'test -f "$DEPLOYPATH/.env" || /bin/cp "$DEPLOYPATH/.env.example" "$DEPLOYPATH/.env" 2>/dev/null || true'

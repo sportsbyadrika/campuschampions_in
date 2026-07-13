@@ -49,6 +49,22 @@ vendored (no Composer required on the server).
 6. Visit your site and **log in** (see default credentials below), then
    **change the password immediately**.
 
+### Deploying via cPanel Git™ Version Control
+
+This repo includes a `.cpanel.yml`. In cPanel → **Git Version Control**, create/clone
+the repository and click **Deploy HEAD Commit**. The deploy:
+
+- Repository path: `/home/olympicd/repositories/campuschampions.in`
+- Document root (deploy target): `/home/olympicd/campuschampions.in`
+- Copies the working tree into the document root **without** overwriting your
+  `.env`, uploaded files (`public/assets/uploads/**`), or runtime `storage/**`.
+- Ensures `storage/` and upload folders exist and are writable (0775).
+- Seeds `.env` from `.env.example` **only if** no `.env` exists yet — then edit it
+  with your real DB/SMTP credentials.
+
+Point the domain's document root at `/home/olympicd/campuschampions.in` (the root
+`.htaccess` forwards requests into `/public`). Requires `rsync` on the host.
+
 ### Default credentials (from `database/seed.sql`)
 
 | Role | Email | Password |
