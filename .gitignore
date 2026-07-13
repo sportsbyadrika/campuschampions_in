@@ -1,0 +1,24 @@
+# Environment
+.env
+
+# Runtime storage (keep the directories, ignore contents)
+/storage/logs/*
+/storage/cache/*
+!/storage/logs/.gitkeep
+!/storage/cache/.gitkeep
+
+# Uploaded files (keep the directories, ignore contents)
+/public/assets/uploads/contestants/*
+/public/assets/uploads/certificates/*
+!/public/assets/uploads/contestants/.gitkeep
+!/public/assets/uploads/certificates/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# NOTE: vendor/ is intentionally committed because the target is shared
+# hosting without Composer. Do not add it to .gitignore.
