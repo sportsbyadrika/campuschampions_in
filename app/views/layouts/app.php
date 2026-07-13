@@ -77,6 +77,9 @@ $user = Auth::user();
                         <a href="<?= e(url('results')) ?>" class="nav-link <?= active_if('/results') ?>">
                             <i class="fa-solid fa-ranking-star mr-1.5"></i>Results
                         </a>
+                        <a href="<?= e(url('certificates')) ?>" class="nav-link <?= active_if('/certificate') ?>">
+                            <i class="fa-solid fa-award mr-1.5"></i>Certificates
+                        </a>
                     <?php endif; ?>
 
                     <a href="<?= e(url('standings')) ?>" class="nav-link <?= active_if('/standings') ?>">

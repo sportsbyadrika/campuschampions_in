@@ -99,6 +99,8 @@ $route = $cfg['route'];
                                     <?= e(format_date((string) $val)) ?>
                                 <?php elseif ($type === 'datetime'): ?>
                                     <?= e(format_datetime((string) $val)) ?>
+                                <?php elseif ($type === 'yesno'): ?>
+                                    <?= ((string) $val === '1') ? 'Yes' : 'No' ?>
                                 <?php elseif ($type === 'color'): ?>
                                     <span class="inline-flex items-center gap-2"><span class="inline-block h-4 w-4 rounded-full border border-slate-200" style="background:<?= e((string)$val) ?>"></span><?= e((string) $val) ?></span>
                                 <?php else: ?>

@@ -122,7 +122,11 @@ campuschampions_in/
       save), event-user assignment enforcement (event users only enter results for
       assigned instances), per-instance results CSV, and championship standings
       (house points with bars + individual leaderboard with medal counts, exportable).
-- [ ] Phase 6 — Certificate templates + PDF generation (Dompdf).
+- [x] **Phase 6 — Certificates**: certificate template CRUD (HTML body with
+      `{{placeholders}}`), and a generation page per event instance that selects a
+      template + contestants (with results), renders XSS-safe HTML, and produces
+      downloadable A4 landscape PDFs via Dompdf, tracked in the certificates table
+      with unique certificate numbers.
 - [ ] Phase 7 — Public results page, caching, system reports, audit log viewer.
 
 ---

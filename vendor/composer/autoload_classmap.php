@@ -7,6 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Controllers\\AuthController' => $baseDir . '/app/Controllers/AuthController.php',
+    'App\\Controllers\\CertificateController' => $baseDir . '/app/Controllers/CertificateController.php',
+    'App\\Controllers\\CertificateTemplateController' => $baseDir . '/app/Controllers/CertificateTemplateController.php',
     'App\\Controllers\\ContestantBulkController' => $baseDir . '/app/Controllers/ContestantBulkController.php',
     'App\\Controllers\\ContestantController' => $baseDir . '/app/Controllers/ContestantController.php',
     'App\\Controllers\\CourseCategoryGroupController' => $baseDir . '/app/Controllers/CourseCategoryGroupController.php',
@@ -28,6 +30,7 @@ return array(
     'App\\Core\\App' => $baseDir . '/app/Core/App.php',
     'App\\Core\\Audit' => $baseDir . '/app/Core/Audit.php',
     'App\\Core\\Auth' => $baseDir . '/app/Core/Auth.php',
+    'App\\Core\\CertificatePdf' => $baseDir . '/app/Core/CertificatePdf.php',
     'App\\Core\\Controller' => $baseDir . '/app/Core/Controller.php',
     'App\\Core\\Csrf' => $baseDir . '/app/Core/Csrf.php',
     'App\\Core\\Csv' => $baseDir . '/app/Core/Csv.php',
@@ -44,6 +47,8 @@ return array(
     'App\\Core\\Validator' => $baseDir . '/app/Core/Validator.php',
     'App\\Core\\View' => $baseDir . '/app/Core/View.php',
     'App\\Models\\Category' => $baseDir . '/app/Models/Category.php',
+    'App\\Models\\Certificate' => $baseDir . '/app/Models/Certificate.php',
+    'App\\Models\\CertificateTemplate' => $baseDir . '/app/Models/CertificateTemplate.php',
     'App\\Models\\ContestantMaster' => $baseDir . '/app/Models/ContestantMaster.php',
     'App\\Models\\ContestantRegistration' => $baseDir . '/app/Models/ContestantRegistration.php',
     'App\\Models\\Course' => $baseDir . '/app/Models/Course.php',

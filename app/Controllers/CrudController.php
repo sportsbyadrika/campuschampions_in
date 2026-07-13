@@ -288,6 +288,7 @@ abstract class CrudController extends Controller
             'datetime' => format_datetime((string) $value),
             'badge'    => ucfirst((string) $value),
             'role'     => Auth::roleLabel((string) $value),
+            'yesno'    => ((string) $value === '1') ? 'Yes' : 'No',
             default    => (string) ($value ?? ''),
         };
     }

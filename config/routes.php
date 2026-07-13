@@ -110,3 +110,13 @@ $router->delete('/results/{instanceId}/assign/{assignmentId}', 'ResultController
 // ---------------------------------------------------------------------
 $router->get('/standings',                'StandingsController@index',  ['auth']);
 $router->get('/standings/export/{type}',  'StandingsController@export', ['auth']);
+
+// ---------------------------------------------------------------------
+// Certificates
+// ---------------------------------------------------------------------
+$crud('certificate-templates', 'CertificateTemplateController');
+
+$router->get('/certificates',                        'CertificateController@index',        ['auth']);
+$router->get('/certificates/download/{certId}',      'CertificateController@download',      ['auth']);
+$router->get('/certificates/{instanceId}/generate',  'CertificateController@generateForm',  ['auth']);
+$router->post('/certificates/{instanceId}/generate', 'CertificateController@generate',      ['auth']);

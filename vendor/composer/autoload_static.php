@@ -153,6 +153,8 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
 
     public static $classMap = array (
         'App\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/AuthController.php',
+        'App\\Controllers\\CertificateController' => __DIR__ . '/../..' . '/app/Controllers/CertificateController.php',
+        'App\\Controllers\\CertificateTemplateController' => __DIR__ . '/../..' . '/app/Controllers/CertificateTemplateController.php',
         'App\\Controllers\\ContestantBulkController' => __DIR__ . '/../..' . '/app/Controllers/ContestantBulkController.php',
         'App\\Controllers\\ContestantController' => __DIR__ . '/../..' . '/app/Controllers/ContestantController.php',
         'App\\Controllers\\CourseCategoryGroupController' => __DIR__ . '/../..' . '/app/Controllers/CourseCategoryGroupController.php',
@@ -174,6 +176,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Core\\App' => __DIR__ . '/../..' . '/app/Core/App.php',
         'App\\Core\\Audit' => __DIR__ . '/../..' . '/app/Core/Audit.php',
         'App\\Core\\Auth' => __DIR__ . '/../..' . '/app/Core/Auth.php',
+        'App\\Core\\CertificatePdf' => __DIR__ . '/../..' . '/app/Core/CertificatePdf.php',
         'App\\Core\\Controller' => __DIR__ . '/../..' . '/app/Core/Controller.php',
         'App\\Core\\Csrf' => __DIR__ . '/../..' . '/app/Core/Csrf.php',
         'App\\Core\\Csv' => __DIR__ . '/../..' . '/app/Core/Csv.php',
@@ -190,6 +193,8 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Core\\Validator' => __DIR__ . '/../..' . '/app/Core/Validator.php',
         'App\\Core\\View' => __DIR__ . '/../..' . '/app/Core/View.php',
         'App\\Models\\Category' => __DIR__ . '/../..' . '/app/Models/Category.php',
+        'App\\Models\\Certificate' => __DIR__ . '/../..' . '/app/Models/Certificate.php',
+        'App\\Models\\CertificateTemplate' => __DIR__ . '/../..' . '/app/Models/CertificateTemplate.php',
         'App\\Models\\ContestantMaster' => __DIR__ . '/../..' . '/app/Models/ContestantMaster.php',
         'App\\Models\\ContestantRegistration' => __DIR__ . '/../..' . '/app/Models/ContestantRegistration.php',
         'App\\Models\\Course' => __DIR__ . '/../..' . '/app/Models/Course.php',
