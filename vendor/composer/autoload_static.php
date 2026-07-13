@@ -152,6 +152,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
     );
 
     public static $classMap = array (
+        'App\\Controllers\\AuditLogController' => __DIR__ . '/../..' . '/app/Controllers/AuditLogController.php',
         'App\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/AuthController.php',
         'App\\Controllers\\CertificateController' => __DIR__ . '/../..' . '/app/Controllers/CertificateController.php',
         'App\\Controllers\\CertificateTemplateController' => __DIR__ . '/../..' . '/app/Controllers/CertificateTemplateController.php',
@@ -170,12 +171,14 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Controllers/ProfileController.php',
         'App\\Controllers\\PublicController' => __DIR__ . '/../..' . '/app/Controllers/PublicController.php',
         'App\\Controllers\\RegistrationController' => __DIR__ . '/../..' . '/app/Controllers/RegistrationController.php',
+        'App\\Controllers\\ReportsController' => __DIR__ . '/../..' . '/app/Controllers/ReportsController.php',
         'App\\Controllers\\ResultController' => __DIR__ . '/../..' . '/app/Controllers/ResultController.php',
         'App\\Controllers\\StandingsController' => __DIR__ . '/../..' . '/app/Controllers/StandingsController.php',
         'App\\Controllers\\UserController' => __DIR__ . '/../..' . '/app/Controllers/UserController.php',
         'App\\Core\\App' => __DIR__ . '/../..' . '/app/Core/App.php',
         'App\\Core\\Audit' => __DIR__ . '/../..' . '/app/Core/Audit.php',
         'App\\Core\\Auth' => __DIR__ . '/../..' . '/app/Core/Auth.php',
+        'App\\Core\\Cache' => __DIR__ . '/../..' . '/app/Core/Cache.php',
         'App\\Core\\CertificatePdf' => __DIR__ . '/../..' . '/app/Core/CertificatePdf.php',
         'App\\Core\\Controller' => __DIR__ . '/../..' . '/app/Core/Controller.php',
         'App\\Core\\Csrf' => __DIR__ . '/../..' . '/app/Core/Csrf.php',

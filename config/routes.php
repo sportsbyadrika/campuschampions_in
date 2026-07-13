@@ -120,3 +120,10 @@ $router->get('/certificates',                        'CertificateController@inde
 $router->get('/certificates/download/{certId}',      'CertificateController@download',      ['auth']);
 $router->get('/certificates/{instanceId}/generate',  'CertificateController@generateForm',  ['auth']);
 $router->post('/certificates/{instanceId}/generate', 'CertificateController@generate',      ['auth']);
+
+// ---------------------------------------------------------------------
+// Audit logs & system reports (Super Admin)
+// ---------------------------------------------------------------------
+$router->get('/audit-logs',        'AuditLogController@index',  ['role:super_admin']);
+$router->get('/audit-logs/export', 'AuditLogController@export', ['role:super_admin']);
+$router->get('/reports',           'ReportsController@index',   ['role:super_admin']);

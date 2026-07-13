@@ -87,6 +87,9 @@ $user = Auth::user();
                     </a>
 
                     <?php if (can('super_admin')): ?>
+                        <a href="<?= e(url('reports')) ?>" class="nav-link <?= active_if('/reports') ?>">
+                            <i class="fa-solid fa-chart-line mr-1.5"></i>Reports
+                        </a>
                         <a href="<?= e(url('audit-logs')) ?>" class="nav-link <?= active_if('/audit-logs') ?>">
                             <i class="fa-solid fa-clipboard-list mr-1.5"></i>Audit
                         </a>

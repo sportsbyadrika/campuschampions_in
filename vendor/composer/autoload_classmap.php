@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Controllers\\AuditLogController' => $baseDir . '/app/Controllers/AuditLogController.php',
     'App\\Controllers\\AuthController' => $baseDir . '/app/Controllers/AuthController.php',
     'App\\Controllers\\CertificateController' => $baseDir . '/app/Controllers/CertificateController.php',
     'App\\Controllers\\CertificateTemplateController' => $baseDir . '/app/Controllers/CertificateTemplateController.php',
@@ -24,12 +25,14 @@ return array(
     'App\\Controllers\\ProfileController' => $baseDir . '/app/Controllers/ProfileController.php',
     'App\\Controllers\\PublicController' => $baseDir . '/app/Controllers/PublicController.php',
     'App\\Controllers\\RegistrationController' => $baseDir . '/app/Controllers/RegistrationController.php',
+    'App\\Controllers\\ReportsController' => $baseDir . '/app/Controllers/ReportsController.php',
     'App\\Controllers\\ResultController' => $baseDir . '/app/Controllers/ResultController.php',
     'App\\Controllers\\StandingsController' => $baseDir . '/app/Controllers/StandingsController.php',
     'App\\Controllers\\UserController' => $baseDir . '/app/Controllers/UserController.php',
     'App\\Core\\App' => $baseDir . '/app/Core/App.php',
     'App\\Core\\Audit' => $baseDir . '/app/Core/Audit.php',
     'App\\Core\\Auth' => $baseDir . '/app/Core/Auth.php',
+    'App\\Core\\Cache' => $baseDir . '/app/Core/Cache.php',
     'App\\Core\\CertificatePdf' => $baseDir . '/app/Core/CertificatePdf.php',
     'App\\Core\\Controller' => $baseDir . '/app/Core/Controller.php',
     'App\\Core\\Csrf' => $baseDir . '/app/Core/Csrf.php',

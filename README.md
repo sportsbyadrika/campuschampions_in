@@ -127,7 +127,11 @@ campuschampions_in/
       template + contestants (with results), renders XSS-safe HTML, and produces
       downloadable A4 landscape PDFs via Dompdf, tracked in the certificates table
       with unique certificate numbers.
-- [ ] Phase 7 — Public results page, caching, system reports, audit log viewer.
+- [x] **Phase 7 — Public page, reports & audit**: public results page (no login)
+      with search (contestant / unique # / event), meet/category/position filters,
+      pagination, print styles, and file-based caching; super-admin system reports
+      (platform totals, per-institution breakdown, CSV exports) and an audit-log
+      viewer with filters + CSV export.
 
 ---
 

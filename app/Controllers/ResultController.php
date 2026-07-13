@@ -165,6 +165,7 @@ class ResultController extends Controller
             $this->json(['success' => false, 'message' => 'Failed to save results.'], 500);
         }
 
+        \App\Core\Cache::flush(); // invalidate public results cache
         Audit::log('result_entry', 'results', $instanceId, null, ['saved' => $saved]);
         $this->json(['success' => true, 'message' => "Saved results for {$saved} contestant(s)."]);
     }
