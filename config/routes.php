@@ -126,4 +126,11 @@ $router->post('/certificates/{instanceId}/generate', 'CertificateController@gene
 // ---------------------------------------------------------------------
 $router->get('/audit-logs',        'AuditLogController@index',  ['role:super_admin']);
 $router->get('/audit-logs/export', 'AuditLogController@export', ['role:super_admin']);
-$router->get('/reports',           'ReportsController@index',   ['role:super_admin']);
+
+// Reports hub + meet reports (all authenticated roles); system report is super-admin only
+$router->get('/reports',                        'ReportsController@index',              ['auth']);
+$router->get('/reports/system',                 'ReportsController@system',             ['role:super_admin']);
+$router->get('/reports/instances-house',        'ReportsController@instancesHouse',     ['auth']);
+$router->get('/reports/course-house',           'ReportsController@courseHouse',        ['auth']);
+$router->get('/reports/instance-contestants',   'ReportsController@instanceContestants',['auth']);
+$router->get('/reports/class-contestants',      'ReportsController@classContestants',   ['auth']);

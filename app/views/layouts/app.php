@@ -69,6 +69,13 @@ $user = Auth::user();
                         </div>
                     <?php endif; ?>
 
+                    <?php if (can('event_user', 'campus_staff')): ?>
+                        <!-- Event users / staff can add-edit contestants (no full Masters menu) -->
+                        <a href="<?= e(url('contestants')) ?>" class="nav-link <?= active_if('/contestants') ?>">
+                            <i class="fa-solid fa-user-group mr-1.5"></i>Contestants
+                        </a>
+                    <?php endif; ?>
+
                     <a href="<?= e(url('meets')) ?>" class="nav-link <?= active_if('/meets') ?>">
                         <i class="fa-solid fa-calendar-days mr-1.5"></i>Meets
                     </a>
@@ -86,10 +93,11 @@ $user = Auth::user();
                         <i class="fa-solid fa-medal mr-1.5"></i>Standings
                     </a>
 
+                    <a href="<?= e(url('reports')) ?>" class="nav-link <?= active_if('/reports') ?>">
+                        <i class="fa-solid fa-chart-line mr-1.5"></i>Reports
+                    </a>
+
                     <?php if (can('super_admin')): ?>
-                        <a href="<?= e(url('reports')) ?>" class="nav-link <?= active_if('/reports') ?>">
-                            <i class="fa-solid fa-chart-line mr-1.5"></i>Reports
-                        </a>
                         <a href="<?= e(url('audit-logs')) ?>" class="nav-link <?= active_if('/audit-logs') ?>">
                             <i class="fa-solid fa-clipboard-list mr-1.5"></i>Audit
                         </a>
@@ -137,10 +145,16 @@ $user = Auth::user();
             <a href="<?= e(url('courses')) ?>" class="mobile-link">Courses</a>
             <a href="<?= e(url('contestants')) ?>" class="mobile-link">Contestants</a>
             <a href="<?= e(url('users')) ?>" class="mobile-link">Users</a>
+        <?php elseif (can('event_user', 'campus_staff')): ?>
+            <a href="<?= e(url('contestants')) ?>" class="mobile-link">Contestants</a>
         <?php endif; ?>
         <a href="<?= e(url('meets')) ?>" class="mobile-link">Meets</a>
-        <a href="<?= e(url('results')) ?>" class="mobile-link">Results</a>
+        <?php if (can('super_admin', 'campus_admin', 'event_user')): ?>
+            <a href="<?= e(url('results')) ?>" class="mobile-link">Results</a>
+            <a href="<?= e(url('certificates')) ?>" class="mobile-link">Certificates</a>
+        <?php endif; ?>
         <a href="<?= e(url('standings')) ?>" class="mobile-link">Standings</a>
+        <a href="<?= e(url('reports')) ?>" class="mobile-link">Reports</a>
     </div>
 </nav>
 
