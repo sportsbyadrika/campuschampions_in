@@ -29,7 +29,11 @@ $exportQs = http_build_query(array_merge($_GET, ['export' => 'csv']));
             </div>
         </form>
         <?php if ($meet): ?>
-            <button onclick="window.print()" class="btn btn-secondary"><i class="fa-solid fa-print"></i> Print</button>
+            <?php if (!empty($printUrl)): ?>
+                <a href="<?= e($printUrl) ?>" target="_blank" rel="noopener" class="btn btn-secondary"><i class="fa-solid fa-print"></i> Print</a>
+            <?php else: ?>
+                <button onclick="window.print()" class="btn btn-secondary"><i class="fa-solid fa-print"></i> Print</button>
+            <?php endif; ?>
             <a href="<?= e(url(ltrim($currentPath, '/') . '?' . $exportQs)) ?>" class="btn btn-secondary"><i class="fa-solid fa-file-csv"></i> CSV</a>
         <?php endif; ?>
     </div>

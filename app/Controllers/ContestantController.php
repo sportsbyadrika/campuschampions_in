@@ -64,6 +64,7 @@ class ContestantController extends CrudController
                 ['key' => 'gender', 'label' => 'Gender'],
                 ['key' => 'course_name', 'label' => 'Course'],
                 ['key' => 'house_name', 'label' => 'House'],
+                ['key' => 'event_instances', 'label' => 'Event Instances'],
                 ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
             ],
             'fields' => [
@@ -119,7 +120,7 @@ class ContestantController extends CrudController
         }
         $searchColumns = array_map(fn($col) => "`$t`.$col", $cfg['search'] ?? []);
 
-        return $model->paginate([
+        $result = $model->paginate([
             'select'  => $select,
             'from'    => "`$t`",
             'joins'   => $joins,
@@ -130,6 +131,30 @@ class ContestantController extends CrudController
             'perPage' => $this->perPage(),
             'campusAlias' => "`$t`",
         ]);
+
+        // Attach each contestant's registered event instances (comma-separated).
+        $ids = array_column($result['rows'], 'id');
+        $byContestant = [];
+        if (!empty($ids)) {
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $regs = Database::instance()->fetchAll(
+                "SELECT r.contestant_id, ei.label
+                 FROM contestant_registrations r
+                 JOIN event_instances ei ON ei.id = r.event_instance_id
+                 WHERE r.contestant_id IN ($in)
+                 ORDER BY ei.label",
+                $ids
+            );
+            foreach ($regs as $rg) {
+                $byContestant[(int) $rg['contestant_id']][] = $rg['label'];
+            }
+        }
+        foreach ($result['rows'] as &$row) {
+            $row['event_instances'] = implode(', ', $byContestant[(int) $row['id']] ?? []);
+        }
+        unset($row);
+
+        return $result;
     }
 
     // ------------------------------------------------------------------

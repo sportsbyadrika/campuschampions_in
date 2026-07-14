@@ -1,5 +1,6 @@
 <?php
-/** @var string $title @var array $meets @var ?array $meet @var array $leadHeaders @var array $houses @var array $rows @var array $totals */
+/** @var string $title @var array $meets @var ?array $meet @var array $leadHeaders @var array $houses @var array $rows @var array $totals @var string $reportKey */
+$printUrl = $meet ? url('reports/' . $reportKey . '/print?meet_id=' . (int) $meet['id']) : null;
 include APP_PATH . '/views/reports/_toolbar.php';
 if ($meet):
 ?>

@@ -575,6 +575,80 @@ class ReportsController extends Controller
         Csv::download($report['filename'], ['Sl No', 'Unique #', 'Name', 'Gender', 'Participating Event Instances', 'Remarks'], $data);
     }
 
+    // ---- Printable / PDF for the pivot reports ----
+
+    private function pivotMeetOrAbort(): array
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        $meet = $this->selectedMeet();
+        if (!$meet) {
+            $this->abort(404, 'Please select a meet.');
+        }
+        return $meet;
+    }
+
+    /** Build the $pivot structure for the print/PDF views. */
+    private function pivotReportData(string $type, array $meet): array
+    {
+        $meetId = (int) $meet['id'];
+        $institution = (string) Database::instance()->scalar(
+            "SELECT name FROM institutions WHERE id = ?",
+            [(int) $meet['campus_id']]
+        );
+        if ($type === 'instances') {
+            [$houses, $rows, $totals] = $this->buildInstanceHousePivot($meetId, (int) $meet['campus_id']);
+            $lead = ['Event Instance'];
+            $title = 'Instances × House — Contestant Count';
+            $file = 'instances_house';
+            $key = 'instances-house';
+        } else {
+            [$houses, $rows, $totals] = $this->buildCourseHousePivot($meetId, (int) $meet['campus_id']);
+            $lead = ['Course', 'Division'];
+            $title = 'Course / Division × House — Contestant Count';
+            $file = 'course_division_house';
+            $key = 'course-house';
+        }
+        return [
+            'title'       => $title,
+            'main'        => $meet['title'],
+            'sub'         => $institution ?: '',
+            'line'        => e($title),
+            'leadHeaders' => $lead,
+            'houses'      => $houses,
+            'rows'        => $rows,
+            'totals'      => $totals,
+            'filename'    => $file . '_' . $meetId,
+            'pdfBase'     => url('reports/' . $key . '/pdf?meet_id=' . $meetId),
+        ];
+    }
+
+    private function streamPivotPdf(array $pivot): void
+    {
+        $orientation = Request::get('orientation') === 'portrait' ? 'portrait' : 'landscape';
+        $html = View::partial('reports/pivot_pdf', ['pivot' => $pivot, 'orientation' => $orientation]);
+        Pdf::stream($html, $pivot['filename'] . '_' . $orientation, $orientation);
+    }
+
+    public function instancesHousePrint(): void
+    {
+        $this->view('reports/pivot_print', ['pivot' => $this->pivotReportData('instances', $this->pivotMeetOrAbort())], null);
+    }
+
+    public function instancesHousePdf(): void
+    {
+        $this->streamPivotPdf($this->pivotReportData('instances', $this->pivotMeetOrAbort()));
+    }
+
+    public function courseHousePrint(): void
+    {
+        $this->view('reports/pivot_print', ['pivot' => $this->pivotReportData('course', $this->pivotMeetOrAbort())], null);
+    }
+
+    public function courseHousePdf(): void
+    {
+        $this->streamPivotPdf($this->pivotReportData('course', $this->pivotMeetOrAbort()));
+    }
+
     private function gender(?string $g): string
     {
         return ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';

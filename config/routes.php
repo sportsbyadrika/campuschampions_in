@@ -142,7 +142,11 @@ $router->get('/audit-logs/export', 'AuditLogController@export', ['role:super_adm
 $router->get('/reports',                        'ReportsController@index',              ['auth']);
 $router->get('/reports/system',                 'ReportsController@system',             ['role:super_admin']);
 $router->get('/reports/instances-house',        'ReportsController@instancesHouse',     ['auth']);
+$router->get('/reports/instances-house/print',  'ReportsController@instancesHousePrint', ['auth']);
+$router->get('/reports/instances-house/pdf',    'ReportsController@instancesHousePdf',   ['auth']);
 $router->get('/reports/course-house',           'ReportsController@courseHouse',        ['auth']);
+$router->get('/reports/course-house/print',     'ReportsController@courseHousePrint',    ['auth']);
+$router->get('/reports/course-house/pdf',        'ReportsController@courseHousePdf',      ['auth']);
 $router->get('/reports/instance-contestants',   'ReportsController@instanceContestants',['auth']);
 $router->get('/reports/instance-contestants/{instanceId}/print', 'ReportsController@instancePrint', ['auth']);
 $router->get('/reports/instance-contestants/{instanceId}/pdf',   'ReportsController@instancePdf',   ['auth']);
