@@ -144,4 +144,7 @@ $router->get('/reports/system',                 'ReportsController@system',     
 $router->get('/reports/instances-house',        'ReportsController@instancesHouse',     ['auth']);
 $router->get('/reports/course-house',           'ReportsController@courseHouse',        ['auth']);
 $router->get('/reports/instance-contestants',   'ReportsController@instanceContestants',['auth']);
+$router->get('/reports/instance-contestants/{instanceId}/print', 'ReportsController@instancePrint', ['auth']);
+$router->get('/reports/instance-contestants/{instanceId}/pdf',   'ReportsController@instancePdf',   ['auth']);
+$router->get('/reports/instance-contestants/{instanceId}/csv',   'ReportsController@instanceCsv',   ['auth']);
 $router->get('/reports/class-contestants',      'ReportsController@classContestants',   ['auth']);

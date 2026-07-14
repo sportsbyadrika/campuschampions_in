@@ -1,35 +1,46 @@
 <?php
-/** @var string $title @var array $meets @var ?array $meet @var array $groups */
-$fmtCd = fn($c, $d) => trim(($c ?? '') . ' / ' . ($d ?? ''), ' /');
-$gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
+/** @var string $title @var array $meets @var ?array $meet @var array $instances */
 include APP_PATH . '/views/reports/_toolbar.php';
 if ($meet):
 ?>
-<div class="mt-6 space-y-6">
-    <?php if (empty($groups)): ?>
-        <div class="rounded-xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200 text-slate-400">No registered contestants for this meet.</div>
-    <?php else: foreach ($groups as $label => $list): ?>
-        <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200 overflow-hidden">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
-                <h2 class="font-semibold text-slate-900"><?= e($label) ?></h2>
-                <span class="text-xs text-slate-500"><?= count($list) ?> contestant(s)</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="data-table">
-                    <thead><tr><th>Unique #</th><th>Name</th><th>Course / Division</th><th>Gender</th></tr></thead>
-                    <tbody>
-                        <?php foreach ($list as $r): ?>
-                            <tr>
-                                <td><?= e($r['unique_number']) ?></td>
-                                <td class="font-medium"><?= e($r['name']) ?></td>
-                                <td><?= e($fmtCd($r['course_name'], $r['division_name'])) ?></td>
-                                <td><?= e($gender($r['gender'])) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    <?php endforeach; endif; ?>
+<div class="mt-6 rounded-xl bg-white shadow-sm ring-1 ring-slate-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Discipline</th>
+                    <th>Event</th>
+                    <th>Category</th>
+                    <th>Event Instance</th>
+                    <th class="text-center">Participants</th>
+                    <th class="text-right print:hidden">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($instances)): ?>
+                    <tr><td colspan="6" class="text-center py-10 text-slate-400">No event instances for this meet.</td></tr>
+                <?php else: foreach ($instances as $i): ?>
+                    <tr>
+                        <td><?= e($i['discipline_name']) ?></td>
+                        <td><?= e($i['event_name']) ?></td>
+                        <td><?= e($i['category_name']) ?></td>
+                        <td class="font-medium"><?= e($i['label']) ?></td>
+                        <td class="text-center">
+                            <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700"><?= (int) $i['participants'] ?></span>
+                        </td>
+                        <td class="text-right whitespace-nowrap print:hidden">
+                            <a href="<?= e(url('reports/instance-contestants/' . (int) $i['id'] . '/print')) ?>" target="_blank" rel="noopener" class="btn btn-secondary btn-sm !inline-flex">
+                                <i class="fa-solid fa-print"></i> Print
+                            </a>
+                            <a href="<?= e(url('reports/instance-contestants/' . (int) $i['id'] . '/csv')) ?>" class="btn btn-secondary btn-sm !inline-flex">
+                                <i class="fa-solid fa-file-csv"></i> CSV
+                            </a>
+                        </td>
+                    </tr>
+                <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
+<style>.btn-sm{padding:.3rem .6rem;font-size:.8rem}</style>
 <?php endif; ?>

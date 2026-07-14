@@ -8,7 +8,10 @@ use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Csv;
 use App\Core\Database;
+use App\Core\Pdf;
 use App\Core\Request;
+use App\Core\View;
+use App\Models\EventInstance;
 use App\Models\MeetMaster;
 
 /**
@@ -300,39 +303,87 @@ class ReportsController extends Controller
         $meet = $this->selectedMeet();
         $meets = (new MeetMaster())->options();
 
-        $groups = [];
+        $instances = [];
         if ($meet) {
-            $rows = Database::instance()->fetchAll(
-                "SELECT ei.id AS instance_id, ei.label AS instance_label,
-                        cm.unique_number, cm.name, co.name AS course_name, dv.name AS division_name, cm.gender
+            $instances = Database::instance()->fetchAll(
+                "SELECT ei.id, ei.label, e.name AS event_name, d.name AS discipline_name, c.name AS category_name,
+                        (SELECT COUNT(*) FROM contestant_registrations r WHERE r.event_instance_id = ei.id) AS participants
                  FROM event_instances ei
                  JOIN event_masters e ON e.id = ei.event_id
                  JOIN discipline_masters d ON d.id = e.discipline_id
-                 JOIN contestant_registrations r ON r.event_instance_id = ei.id
-                 JOIN contestant_masters cm ON cm.id = r.contestant_id
-                 LEFT JOIN courses co ON co.id = cm.course_id
-                 LEFT JOIN divisions dv ON dv.id = cm.division_id
+                 JOIN categories c ON c.id = ei.category_id
                  WHERE d.meet_id = ?
-                 ORDER BY ei.label, cm.name",
+                 ORDER BY d.name, ei.label",
                 [(int) $meet['id']]
             );
-            foreach ($rows as $r) {
-                $groups[$r['instance_label']][] = $r;
-            }
             if ($this->wantsCsv()) {
-                $data = [];
-                foreach ($rows as $r) {
-                    $data[] = [$r['instance_label'], $r['unique_number'], $r['name'],
-                        trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /'), $this->gender($r['gender'])];
-                }
-                Csv::download('instance_contestants', ['Event Instance', 'Unique #', 'Name', 'Course/Division', 'Gender'], $data);
+                $data = array_map(fn($i) => [$i['discipline_name'], $i['event_name'], $i['category_name'], $i['label'], (int) $i['participants']], $instances);
+                Csv::download('event_instances_summary', ['Discipline', 'Event', 'Category', 'Instance', 'Participants'], $data);
             }
         }
 
         $this->view('reports/list_instances', [
             'title'  => 'Event Instance — Contestant List',
-            'meets'  => $meets, 'meet' => $meet, 'groups' => $groups,
+            'meets'  => $meets, 'meet' => $meet, 'instances' => $instances,
         ]);
+    }
+
+    // ---- Printable / PDF / CSV participant list for a single instance ----
+
+    /** Load an instance (campus-checked) with its institution + participants. */
+    private function instanceForReport(int $instanceId): array
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        $detail = (new EventInstance())->detail($instanceId);
+        if (!$detail) {
+            $this->abort(404, 'Event instance not found.');
+        }
+        if (Auth::campusId() !== null && (int) $detail['campus_id'] !== (int) Auth::campusId()) {
+            $this->abort(403, 'This event is not in your campus.');
+        }
+        $institution = (string) Database::instance()->scalar(
+            "SELECT name FROM institutions WHERE id = ?",
+            [(int) $detail['campus_id']]
+        );
+        $participants = Database::instance()->fetchAll(
+            "SELECT cm.unique_number, cm.name, co.name AS course_name, dv.name AS division_name, cm.gender
+             FROM contestant_registrations r
+             JOIN contestant_masters cm ON cm.id = r.contestant_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
+             WHERE r.event_instance_id = ?
+             ORDER BY cm.name",
+            [$instanceId]
+        );
+        return ['detail' => $detail, 'institution' => $institution ?: '', 'participants' => $participants];
+    }
+
+    /** Printable HTML page (opens in a new tab). */
+    public function instancePrint(string $instanceId): void
+    {
+        $d = $this->instanceForReport((int) $instanceId);
+        $this->view('reports/instance_print', ['report' => $d], null);
+    }
+
+    /** PDF (portrait/landscape) with repeating heading + "Page X of Y" footer. */
+    public function instancePdf(string $instanceId): void
+    {
+        $d = $this->instanceForReport((int) $instanceId);
+        $orientation = Request::get('orientation') === 'landscape' ? 'landscape' : 'portrait';
+        $html = View::partial('reports/instance_pdf', ['report' => $d, 'orientation' => $orientation]);
+        Pdf::stream($html, 'participants_' . (int) $instanceId . '_' . $orientation, $orientation);
+    }
+
+    /** CSV of participants for a single instance. */
+    public function instanceCsv(string $instanceId): void
+    {
+        $d = $this->instanceForReport((int) $instanceId);
+        $data = array_map(fn($p) => [
+            $p['unique_number'], $p['name'],
+            trim(($p['course_name'] ?? '') . ' / ' . ($p['division_name'] ?? ''), ' /'),
+            $this->gender($p['gender']), '',
+        ], $d['participants']);
+        Csv::download('participants_' . (int) $instanceId, ['Unique #', 'Name', 'Class/Division', 'Gender', 'Remarks'], $data);
     }
 
     // ==================================================================
