@@ -46,9 +46,22 @@ abstract class CrudController extends Controller
     /** Roles allowed to view/list/export. */
     protected array $viewRoles = ['super_admin', 'campus_admin', 'event_user', 'campus_staff'];
 
+    /** Roles allowed to delete. Empty = same as manage roles. */
+    protected array $deleteRoles = [];
+
+    protected function deleteRoles(): array
+    {
+        return $this->deleteRoles ?: $this->manageRoles;
+    }
+
     protected function guardManage(): void
     {
         $this->authorize(...$this->manageRoles);
+    }
+
+    protected function guardDelete(): void
+    {
+        $this->authorize(...$this->deleteRoles());
     }
 
     protected function guardView(): void
@@ -73,6 +86,7 @@ abstract class CrudController extends Controller
             'filters' => $this->currentFilters($cfg),
             'search'  => (string) Request::get('q', ''),
             'canManage' => Auth::is(...$this->manageRoles),
+            'canDelete' => Auth::is(...$this->deleteRoles()),
         ]);
     }
 
@@ -183,7 +197,7 @@ abstract class CrudController extends Controller
     // ------------------------------------------------------------------
     public function destroy(string $id): void
     {
-        $this->guardManage();
+        $this->guardDelete();
         $cfg = $this->config();
         $id = (int) $id;
 

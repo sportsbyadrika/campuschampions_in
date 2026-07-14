@@ -89,11 +89,17 @@
                 form.querySelector('#crudId').value = data.id || '';
                 cfg.fields.forEach(f => {
                     const input = form.querySelector('[data-field="' + f + '"]');
-                    if (input && data[f] !== undefined && data[f] !== null) {
-                        input.value = data[f];
+                    if (!input) return;
+                    const val = data[f];
+                    if (input.multiple && Array.isArray(val)) {
+                        // multi-select: mark matching options selected
+                        const set = new Set(val.map(String));
+                        Array.from(input.options).forEach(o => { o.selected = set.has(String(o.value)); });
+                    } else if (val !== undefined && val !== null) {
+                        input.value = val;
                         // sync color picker if present
                         const picker = document.getElementById('f_' + f + '_picker');
-                        if (picker && /^#[0-9a-fA-F]{6}$/.test(data[f])) picker.value = data[f];
+                        if (picker && /^#[0-9a-fA-F]{6}$/.test(val)) picker.value = val;
                     }
                 });
                 openModal(modal);

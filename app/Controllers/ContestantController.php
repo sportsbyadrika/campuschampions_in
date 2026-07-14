@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Audit;
 use App\Core\Auth;
+use App\Core\Database;
 use App\Core\FileUpload;
 use App\Core\Model;
 use App\Core\Request;
@@ -18,7 +19,10 @@ use App\Models\House;
 
 class ContestantController extends CrudController
 {
-    protected array $manageRoles = ['super_admin', 'campus_admin'];
+    // Campus admins, event users and campus staff may add/edit contestants...
+    protected array $manageRoles = ['super_admin', 'campus_admin', 'event_user', 'campus_staff'];
+    // ...but only admins may delete them.
+    protected array $deleteRoles = ['super_admin', 'campus_admin'];
     protected array $viewRoles   = ['super_admin', 'campus_admin', 'event_user', 'campus_staff'];
 
     protected function model(): Model
@@ -51,7 +55,8 @@ class ContestantController extends CrudController
             'showCampus'   => true,
             'formColumns'  => 3,
             'extraActions' => [
-                ['label' => 'Bulk Upload', 'url' => 'contestants/bulk', 'icon' => 'fa-file-arrow-up', 'manage' => true],
+                // Bulk upload stays restricted to admins
+                ['label' => 'Bulk Upload', 'url' => 'contestants/bulk', 'icon' => 'fa-file-arrow-up', 'roles' => ['super_admin', 'campus_admin']],
             ],
             'columns' => [
                 ['key' => 'unique_number', 'label' => 'Unique #'],
@@ -75,6 +80,9 @@ class ContestantController extends CrudController
                 ['name' => 'guardian_name', 'label' => 'Guardian Name', 'type' => 'text'],
                 ['name' => 'photo', 'label' => 'Photo (JPG/PNG/WEBP, ≤2MB)', 'type' => 'file'],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => true, 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
+                ['name' => 'event_instance_ids', 'label' => 'Event Instances', 'type' => 'multiselect', 'full' => true,
+                 'options' => $this->instanceOptions(),
+                 'hint' => 'Hold Ctrl/Cmd to select multiple. These register the contestant for the chosen events.'],
             ],
             'search'  => ['unique_number', 'name', 'mobile', 'email'],
             'filters' => [
@@ -147,6 +155,7 @@ class ContestantController extends CrudController
         }
 
         $id = $this->model()->create($data);
+        $this->syncRegistrations($id, $this->desiredInstanceIds());
         Audit::log('create', 'contestant_masters', $id, null, $data);
         $this->respond('Contestant created successfully.');
     }
@@ -178,13 +187,30 @@ class ContestantController extends CrudController
         }
 
         $this->model()->update($id, $data);
+        $this->syncRegistrations($id, $this->desiredInstanceIds());
         Audit::log('update', 'contestant_masters', $id, $existing, $data);
         $this->respond('Contestant updated successfully.');
     }
 
-    public function destroy(string $id): void
+    /** Include the contestant's currently registered event instances for the edit modal. */
+    public function find(string $id): void
     {
         $this->guardManage();
+        $record = $this->model()->find((int) $id);
+        if (!$record) {
+            $this->json(['success' => false, 'message' => 'Contestant not found.'], 404);
+        }
+        $rows = Database::instance()->fetchAll(
+            "SELECT event_instance_id FROM contestant_registrations WHERE contestant_id = ?",
+            [(int) $id]
+        );
+        $record['event_instance_ids'] = array_map(fn($r) => (string) $r['event_instance_id'], $rows);
+        $this->json(['success' => true, 'data' => $record]);
+    }
+
+    public function destroy(string $id): void
+    {
+        $this->guardDelete();
         $id = (int) $id;
         $existing = $this->model()->find($id);
         if (!$existing) {
@@ -234,5 +260,103 @@ class ContestantController extends CrudController
             'dob'           => 'date',
             'status'        => 'required|in:active,inactive',
         ];
+    }
+
+    // ------------------------------------------------------------------
+    // Event-instance assignment (registrations from the contestant side)
+    // ------------------------------------------------------------------
+
+    /** [instance_id => label] of event instances in the current campus. */
+    private function instanceOptions(): array
+    {
+        $params = [];
+        $scope = '';
+        if (Auth::campusId() !== null) {
+            $scope = 'WHERE m.campus_id = ?';
+            $params[] = Auth::campusId();
+        }
+        $rows = Database::instance()->fetchAll(
+            "SELECT ei.id, ei.label, e.name AS event_name, c.name AS category_name, m.title AS meet_title
+             FROM event_instances ei
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             JOIN categories c ON c.id = ei.category_id
+             JOIN meet_masters m ON m.id = d.meet_id
+             $scope
+             ORDER BY m.title, ei.instance_date, e.name",
+            $params
+        );
+        $opts = [];
+        foreach ($rows as $r) {
+            $opts[(int) $r['id']] = sprintf('%s · %s (%s) — %s', $r['meet_title'], $r['event_name'], $r['category_name'], $r['label']);
+        }
+        return $opts;
+    }
+
+    /** Selected instance ids from the request, restricted to campus-owned instances. */
+    private function desiredInstanceIds(): array
+    {
+        $submitted = Request::input('event_instance_ids');
+        if (!is_array($submitted)) {
+            return [];
+        }
+        $allowed = array_keys($this->instanceOptions()); // campus-scoped whitelist
+        $allowedSet = array_flip($allowed);
+        $ids = [];
+        foreach ($submitted as $v) {
+            $id = (int) $v;
+            if ($id > 0 && isset($allowedSet[$id])) {
+                $ids[$id] = $id;
+            }
+        }
+        return array_values($ids);
+    }
+
+    /**
+     * Reconcile a contestant's registrations to the desired instance set.
+     * Adds new registrations; removes deselected ones that have no result yet
+     * (result-bearing registrations are preserved to avoid orphaning results).
+     */
+    private function syncRegistrations(int $contestantId, array $desiredIds): void
+    {
+        $db = Database::instance();
+        $current = $db->fetchAll(
+            "SELECT id, event_instance_id FROM contestant_registrations WHERE contestant_id = ?",
+            [$contestantId]
+        );
+        $currentByInstance = [];
+        foreach ($current as $c) {
+            $currentByInstance[(int) $c['event_instance_id']] = (int) $c['id'];
+        }
+        $desiredSet = array_flip($desiredIds);
+
+        // Add newly selected instances
+        foreach ($desiredIds as $instanceId) {
+            if (!isset($currentByInstance[$instanceId])) {
+                try {
+                    $db->query(
+                        "INSERT INTO contestant_registrations (contestant_id, event_instance_id, registration_date, status)
+                         VALUES (?, ?, ?, 'registered')",
+                        [$contestantId, $instanceId, date('Y-m-d')]
+                    );
+                } catch (\PDOException $e) {
+                    // Ignore duplicate races (unique contestant_id + event_instance_id)
+                }
+            }
+        }
+
+        // Remove deselected instances, but keep any that already have a result
+        foreach ($currentByInstance as $instanceId => $regId) {
+            if (isset($desiredSet[$instanceId])) {
+                continue;
+            }
+            $hasResult = (int) $db->scalar(
+                "SELECT COUNT(*) FROM results WHERE event_instance_id = ? AND contestant_id = ?",
+                [$instanceId, $contestantId]
+            );
+            if ($hasResult === 0) {
+                $db->query("DELETE FROM contestant_registrations WHERE id = ?", [$regId]);
+            }
+        }
     }
 }

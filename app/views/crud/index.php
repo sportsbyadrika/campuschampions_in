@@ -11,6 +11,7 @@ $rows = $result['rows'];
 $columns = $cfg['columns'];
 $showCampus = !empty($cfg['showCampus']) && \App\Core\Auth::isSuperAdmin();
 $route = $cfg['route'];
+$canDelete = $canDelete ?? $canManage; // separate delete permission (defaults to manage)
 ?>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div class="flex items-center gap-3">
@@ -23,7 +24,10 @@ $route = $cfg['route'];
         </div>
     </div>
     <div class="flex items-center gap-2">
-        <?php foreach (($cfg['extraActions'] ?? []) as $action): if (!empty($action['manage']) && !$canManage) continue; ?>
+        <?php foreach (($cfg['extraActions'] ?? []) as $action):
+            if (!empty($action['manage']) && !$canManage) continue;
+            if (!empty($action['roles']) && !can(...$action['roles'])) continue;
+        ?>
             <a href="<?= e(url($action['url'])) ?>" class="btn btn-secondary"><i class="fa-solid <?= e($action['icon']) ?>"></i> <?= e($action['label']) ?></a>
         <?php endforeach; ?>
         <a href="<?= e(url($route . '/export?' . http_build_query($_GET))) ?>" class="btn btn-secondary">
@@ -115,7 +119,9 @@ $route = $cfg['route'];
                                 <a href="<?= e(url(str_replace('{id}', (string) (int) $row['id'], $cfg['rowLink']['urlPattern']))) ?>" class="text-slate-500 hover:text-primary px-2" title="<?= e($cfg['rowLink']['title'] ?? 'Open') ?>"><i class="fa-solid <?= e($cfg['rowLink']['icon']) ?>"></i></a>
                             <?php endif; ?>
                             <button type="button" class="text-slate-500 hover:text-primary px-2" data-crud-edit="<?= (int) $row['id'] ?>" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <?php if ($canDelete): ?>
                             <button type="button" class="text-slate-500 hover:text-rose-600 px-2" data-crud-delete="<?= (int) $row['id'] ?>" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                            <?php endif; ?>
                         </td>
                         <?php endif; ?>
                     </tr>
@@ -167,6 +173,13 @@ $spanFull   = $formCols > 1 ? "sm:col-span-2 md:col-span-{$formCols}" : '';
                                 <input type="color" id="f_<?= e($name) ?>_picker" value="#2563EB" class="h-9 w-12 rounded border border-slate-300">
                                 <input type="text" id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-input" placeholder="#RRGGBB" data-field="<?= e($name) ?>">
                             </div>
+                        <?php elseif ($field['type'] === 'multiselect'): ?>
+                            <select id="f_<?= e($name) ?>" name="<?= e($name) ?>[]" multiple size="7" class="form-select" data-field="<?= e($name) ?>">
+                                <?php foreach (($field['options'] ?? []) as $val => $label): ?>
+                                    <option value="<?= e($val) ?>"><?= e($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php if (!empty($field['hint'])): ?><p class="mt-1 text-xs text-slate-500"><?= e($field['hint']) ?></p><?php endif; ?>
                         <?php else: ?>
                             <input type="<?= e($field['type']) ?>" id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-input" data-field="<?= e($name) ?>" <?= !empty($field['placeholder']) ? 'placeholder="' . e($field['placeholder']) . '"' : '' ?>>
                         <?php endif; ?>
