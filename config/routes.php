@@ -147,4 +147,7 @@ $router->get('/reports/instance-contestants',   'ReportsController@instanceConte
 $router->get('/reports/instance-contestants/{instanceId}/print', 'ReportsController@instancePrint', ['auth']);
 $router->get('/reports/instance-contestants/{instanceId}/pdf',   'ReportsController@instancePdf',   ['auth']);
 $router->get('/reports/instance-contestants/{instanceId}/csv',   'ReportsController@instanceCsv',   ['auth']);
-$router->get('/reports/class-contestants',      'ReportsController@classContestants',   ['auth']);
+$router->get('/reports/class-contestants',        'ReportsController@classContestants', ['auth']);
+$router->get('/reports/class-contestants/print',  'ReportsController@classPrint',       ['auth']);
+$router->get('/reports/class-contestants/pdf',    'ReportsController@classPdf',         ['auth']);
+$router->get('/reports/class-contestants/csv',    'ReportsController@classCsv',         ['auth']);

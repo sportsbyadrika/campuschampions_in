@@ -358,20 +358,59 @@ class ReportsController extends Controller
         return ['detail' => $detail, 'institution' => $institution ?: '', 'participants' => $participants];
     }
 
+    /** Build the generic $report structure for an event instance. */
+    private function instanceReportData(int $instanceId): array
+    {
+        $d = $this->instanceForReport($instanceId);
+        $det = $d['detail'];
+        $line = '<strong>' . e($det['discipline_name']) . '</strong> &mdash; '
+            . e($det['event_name']) . ' &middot; ' . e($det['category_name']) . ' &middot; ' . e($det['label']);
+        $rows = array_map(fn($p) => [
+            'unique_number' => $p['unique_number'],
+            'name'          => $p['name'],
+            'class'         => trim(($p['course_name'] ?? '') . ' / ' . ($p['division_name'] ?? ''), ' /'),
+            'gender'        => $this->gender($p['gender']),
+        ], $d['participants']);
+
+        return [
+            'title'    => 'Participants — ' . $det['label'],
+            'main'     => $det['meet_title'],
+            'sub'      => $d['institution'],
+            'line'     => $line,
+            'pdfBase'  => url('reports/instance-contestants/' . $instanceId . '/pdf'),
+            'filename' => 'participants_' . $instanceId,
+            'columns'  => [
+                ['label' => 'Sl No', 'type' => 'sl'],
+                ['label' => 'Unique #', 'key' => 'unique_number', 'cls' => 'num'],
+                ['label' => 'Name', 'key' => 'name'],
+                ['label' => 'Class/Division', 'key' => 'class'],
+                ['label' => 'Gender', 'key' => 'gender', 'cls' => 'gen'],
+                ['label' => 'Remarks', 'type' => 'blank', 'cls' => 'remarks'],
+            ],
+            'rows'     => $rows,
+        ];
+    }
+
     /** Printable HTML page (opens in a new tab). */
     public function instancePrint(string $instanceId): void
     {
-        $d = $this->instanceForReport((int) $instanceId);
-        $this->view('reports/instance_print', ['report' => $d], null);
+        $report = $this->instanceReportData((int) $instanceId);
+        $this->view('reports/participants_print', ['report' => $report], null);
     }
 
     /** PDF (portrait/landscape) with repeating heading + "Page X of Y" footer. */
     public function instancePdf(string $instanceId): void
     {
-        $d = $this->instanceForReport((int) $instanceId);
+        $report = $this->instanceReportData((int) $instanceId);
+        $this->streamPdf($report);
+    }
+
+    /** Shared: stream a $report structure as PDF using the requested orientation. */
+    private function streamPdf(array $report): void
+    {
         $orientation = Request::get('orientation') === 'landscape' ? 'landscape' : 'portrait';
-        $html = View::partial('reports/instance_pdf', ['report' => $d, 'orientation' => $orientation]);
-        Pdf::stream($html, 'participants_' . (int) $instanceId . '_' . $orientation, $orientation);
+        $html = View::partial('reports/participants_pdf', ['report' => $report, 'orientation' => $orientation]);
+        Pdf::stream($html, $report['filename'] . '_' . $orientation, $orientation);
     }
 
     /** CSV of participants for a single instance. */
@@ -399,11 +438,11 @@ class ReportsController extends Controller
         $meet = $this->selectedMeet();
         $meets = (new MeetMaster())->options();
 
-        $rows = [];
+        $groups = [];
         if ($meet) {
-            $flat = Database::instance()->fetchAll(
-                "SELECT cm.id, cm.unique_number, cm.name, co.name AS course_name, dv.name AS division_name,
-                        cm.gender, ei.label AS instance_label
+            $groups = Database::instance()->fetchAll(
+                "SELECT cm.course_id, co.name AS course_name, cm.division_id, dv.name AS division_name,
+                        COUNT(DISTINCT cm.id) AS contestants
                  FROM contestant_masters cm
                  JOIN contestant_registrations r ON r.contestant_id = cm.id
                  JOIN event_instances ei ON ei.id = r.event_instance_id
@@ -412,40 +451,128 @@ class ReportsController extends Controller
                  LEFT JOIN courses co ON co.id = cm.course_id
                  LEFT JOIN divisions dv ON dv.id = cm.division_id
                  WHERE d.meet_id = ?
-                 ORDER BY co.name, dv.name, cm.name, ei.label",
+                 GROUP BY cm.course_id, cm.division_id
+                 ORDER BY co.name, dv.name",
                 [(int) $meet['id']]
             );
-            // Group instances per contestant (portable, no GROUP_CONCAT)
-            $map = [];
-            foreach ($flat as $f) {
-                $id = (int) $f['id'];
-                if (!isset($map[$id])) {
-                    $map[$id] = [
-                        'unique_number' => $f['unique_number'], 'name' => $f['name'],
-                        'course_name' => $f['course_name'], 'division_name' => $f['division_name'],
-                        'gender' => $f['gender'], 'instances' => [],
-                    ];
-                }
-                $map[$id]['instances'][] = $f['instance_label'];
-            }
-            $rows = array_values($map);
-            usort($rows, fn($a, $b) => strcasecmp($a['name'], $b['name']));
-
             if ($this->wantsCsv()) {
-                $data = [];
-                foreach ($rows as $r) {
-                    $data[] = [$r['unique_number'], $r['name'],
-                        trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /'),
-                        $this->gender($r['gender']), implode(', ', $r['instances'])];
-                }
-                Csv::download('class_division_contestants', ['Unique #', 'Name', 'Course/Division', 'Gender', 'Participating Event Instances'], $data);
+                $data = array_map(fn($g) => [$g['course_name'] ?? '—', $g['division_name'] ?? '—', (int) $g['contestants']], $groups);
+                Csv::download('class_division_summary', ['Course', 'Division', 'Contestants'], $data);
             }
         }
 
         $this->view('reports/list_class', [
             'title'  => 'Class / Division — Contestant List',
-            'meets'  => $meets, 'meet' => $meet, 'rows' => $rows,
+            'meets'  => $meets, 'meet' => $meet, 'groups' => $groups,
         ]);
+    }
+
+    /** Parse meet_id / course_id / division_id from the query (0 or '' => null). */
+    private function classParams(): array
+    {
+        $meetId = (int) Request::get('meet_id', 0);
+        if ($meetId <= 0) {
+            $this->abort(404, 'Meet not found.');
+        }
+        $c = Request::get('course_id', '');
+        $dv = Request::get('division_id', '');
+        $courseId   = ($c === '' || $c === '0') ? null : (int) $c;
+        $divisionId = ($dv === '' || $dv === '0') ? null : (int) $dv;
+        return [$meetId, $courseId, $divisionId];
+    }
+
+    /** Build the generic $report structure for a class/division group. */
+    private function classReportData(int $meetId, ?int $courseId, ?int $divisionId): array
+    {
+        $meet = (new MeetMaster())->find($meetId); // campus-scoped
+        if (!$meet) {
+            $this->abort(404, 'Meet not found.');
+        }
+        $db = Database::instance();
+        $institution = (string) $db->scalar("SELECT name FROM institutions WHERE id = ?", [(int) $meet['campus_id']]);
+        $courseName   = $courseId !== null ? (string) $db->scalar("SELECT name FROM courses WHERE id = ?", [$courseId]) : null;
+        $divisionName = $divisionId !== null ? (string) $db->scalar("SELECT name FROM divisions WHERE id = ?", [$divisionId]) : null;
+        $groupLabel = trim(($courseName ?: '—') . ' / ' . ($divisionName ?: '—'));
+
+        // Null-safe course/division conditions (portable)
+        $params = [$meetId];
+        $cond = $courseId !== null ? ' AND cm.course_id = ?' : ' AND cm.course_id IS NULL';
+        if ($courseId !== null) { $params[] = $courseId; }
+        $cond .= $divisionId !== null ? ' AND cm.division_id = ?' : ' AND cm.division_id IS NULL';
+        if ($divisionId !== null) { $params[] = $divisionId; }
+
+        $flat = $db->fetchAll(
+            "SELECT cm.id, cm.unique_number, cm.name, cm.gender, ei.label AS instance_label
+             FROM contestant_masters cm
+             JOIN contestant_registrations r ON r.contestant_id = cm.id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             WHERE d.meet_id = ? $cond
+             ORDER BY cm.name, ei.label",
+            $params
+        );
+        $map = [];
+        foreach ($flat as $f) {
+            $id = (int) $f['id'];
+            if (!isset($map[$id])) {
+                $map[$id] = ['unique_number' => $f['unique_number'], 'name' => $f['name'], 'gender' => $this->gender($f['gender']), 'instances' => []];
+            }
+            $map[$id]['instances'][] = $f['instance_label'];
+        }
+        $rows = array_map(fn($m) => [
+            'unique_number' => $m['unique_number'],
+            'name'          => $m['name'],
+            'gender'        => $m['gender'],
+            'instances'     => implode(', ', $m['instances']),
+        ], array_values($map));
+
+        $qs = 'meet_id=' . $meetId . '&course_id=' . ($courseId ?? 0) . '&division_id=' . ($divisionId ?? 0);
+        return [
+            'title'    => 'Class/Division — ' . $groupLabel,
+            'main'     => $meet['title'],
+            'sub'      => $institution ?: '',
+            'line'     => 'Class / Division: <strong>' . e($groupLabel) . '</strong>',
+            'pdfBase'  => url('reports/class-contestants/pdf?' . $qs),
+            'filename' => 'class_' . $meetId . '_' . ($courseId ?? 0) . '_' . ($divisionId ?? 0),
+            'columns'  => [
+                ['label' => 'Sl No', 'type' => 'sl'],
+                ['label' => 'Unique #', 'key' => 'unique_number', 'cls' => 'num'],
+                ['label' => 'Name', 'key' => 'name'],
+                ['label' => 'Gender', 'key' => 'gender', 'cls' => 'gen'],
+                ['label' => 'Participating Event Instances', 'key' => 'instances'],
+                ['label' => 'Remarks', 'type' => 'blank', 'cls' => 'remarks'],
+            ],
+            'rows'     => $rows,
+        ];
+    }
+
+    public function classPrint(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $report = $this->classReportData($m, $c, $dv);
+        $this->view('reports/participants_print', ['report' => $report], null);
+    }
+
+    public function classPdf(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $this->streamPdf($this->classReportData($m, $c, $dv));
+    }
+
+    public function classCsv(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $report = $this->classReportData($m, $c, $dv);
+        $sl = 0;
+        $data = array_map(function ($r) use (&$sl) {
+            $sl++;
+            return [$sl, $r['unique_number'], $r['name'], $r['gender'], $r['instances'], ''];
+        }, $report['rows']);
+        Csv::download($report['filename'], ['Sl No', 'Unique #', 'Name', 'Gender', 'Participating Event Instances', 'Remarks'], $data);
     }
 
     private function gender(?string $g): string
