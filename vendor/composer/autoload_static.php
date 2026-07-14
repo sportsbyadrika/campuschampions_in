@@ -166,6 +166,7 @@ class ComposerStaticInitd6255dc80d9ab3cf9e572293566e5f8e
         'App\\Controllers\\HomeController' => __DIR__ . '/../..' . '/app/Controllers/HomeController.php',
         'App\\Controllers\\HouseController' => __DIR__ . '/../..' . '/app/Controllers/HouseController.php',
         'App\\Controllers\\InstitutionController' => __DIR__ . '/../..' . '/app/Controllers/InstitutionController.php',
+        'App\\Controllers\\MeetBulkController' => __DIR__ . '/../..' . '/app/Controllers/MeetBulkController.php',
         'App\\Controllers\\MeetController' => __DIR__ . '/../..' . '/app/Controllers/MeetController.php',
         'App\\Controllers\\MeetSetupController' => __DIR__ . '/../..' . '/app/Controllers/MeetSetupController.php',
         'App\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Controllers/ProfileController.php',

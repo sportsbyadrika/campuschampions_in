@@ -75,6 +75,17 @@ $crud('contestants',             'ContestantController');
 $crud('meets',                   'MeetController');
 
 // ---------------------------------------------------------------------
+// Meet bulk import (events + event instances) — campus admin / super admin
+// ---------------------------------------------------------------------
+$router->get('/meets/{meetId}/bulk',                    'MeetBulkController@form',              ['auth']);
+$router->get('/meets/{meetId}/bulk/events-template',    'MeetBulkController@eventsTemplate',    ['auth']);
+$router->get('/meets/{meetId}/bulk/instances-template', 'MeetBulkController@instancesTemplate', ['auth']);
+$router->post('/meets/{meetId}/bulk/events-preview',    'MeetBulkController@eventsPreview',      ['auth']);
+$router->post('/meets/{meetId}/bulk/events-import',     'MeetBulkController@eventsImport',       ['auth']);
+$router->post('/meets/{meetId}/bulk/instances-preview', 'MeetBulkController@instancesPreview',   ['auth']);
+$router->post('/meets/{meetId}/bulk/instances-import',  'MeetBulkController@instancesImport',    ['auth']);
+
+// ---------------------------------------------------------------------
 // Meet setup hub (disciplines, categories, events, instances, points)
 // ---------------------------------------------------------------------
 $router->get('/meets/{meetId}/setup', 'MeetSetupController@show', ['auth']);

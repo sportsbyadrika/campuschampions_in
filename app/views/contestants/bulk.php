@@ -28,7 +28,8 @@
         <a href="<?= e(url('contestants/bulk/template')) ?>" class="btn btn-secondary mt-3"><i class="fa-solid fa-download"></i> Download Template</a>
         <div class="mt-4 text-xs text-slate-500">
             <p class="font-medium text-slate-700">Columns:</p>
-            <code class="block mt-1 break-words">unique_number, name, dob, gender, course, division, house, course_category_group, mobile, email, guardian_name, status</code>
+            <code class="block mt-1 break-words">unique_number, name, dob, gender, course, division, house, course_category_group, mobile, email, guardian_name, status, event_instances</code>
+            <p class="mt-2"><strong>event_instances</strong> (optional): event instance labels to register the contestant for, separated by <code>;</code> or <code>|</code>. If the unique number already exists, only these event instances are added (existing details are left unchanged).</p>
         </div>
     </div>
 </div>

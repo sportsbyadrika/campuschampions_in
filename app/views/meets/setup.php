@@ -11,6 +11,7 @@ $statusSel = fn($cur, $val) => $cur === $val ? 'selected' : '';
             <p class="text-sm text-slate-500"><?= e(format_date($meet['start_date'])) ?> &ndash; <?= e(format_date($meet['end_date'])) ?> · <?= status_badge($meet['status']) ?></p>
         </div>
     </div>
+    <a href="<?= e(url('meets/' . (int) $meet['id'] . '/bulk')) ?>" class="btn btn-secondary"><i class="fa-solid fa-file-arrow-up"></i> Bulk Import</a>
 </div>
 
 <!-- Tabs -->

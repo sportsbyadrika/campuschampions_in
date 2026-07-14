@@ -1,15 +1,16 @@
 <?php
-/** @var array $preview @var array $headers @var int $validCount @var int $totalCount */
+/** @var array $meet @var string $type @var array $headers @var array $cols @var array $preview @var int $validCount @var string $importUrl @var string $backUrl */
+$total = count($preview);
 ?>
 <div class="flex items-center justify-between">
     <div>
-        <h1 class="text-2xl font-bold text-slate-900">Preview Import</h1>
+        <h1 class="text-2xl font-bold text-slate-900">Preview <?= $type === 'events' ? 'Events' : 'Event Instances' ?></h1>
         <p class="text-sm text-slate-500">
             <span class="font-semibold text-emerald-600"><?= $validCount ?></span> valid,
-            <span class="font-semibold text-rose-600"><?= $totalCount - $validCount ?></span> invalid of <?= $totalCount ?> rows.
+            <span class="font-semibold text-rose-600"><?= $total - $validCount ?></span> invalid of <?= $total ?> rows.
         </p>
     </div>
-    <a href="<?= e(url('contestants/bulk')) ?>" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+    <a href="<?= e($backUrl) ?>" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
 </div>
 
 <div class="mt-6 rounded-xl bg-white shadow-sm ring-1 ring-slate-200 overflow-hidden">
@@ -19,13 +20,7 @@
                 <tr>
                     <th>#</th>
                     <th>Status</th>
-                    <th>Unique #</th>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Course</th>
-                    <th>Mode</th>
-                    <th>Events</th>
-                    <th>Issues</th>
+                    <?php foreach ($headers as $h): ?><th><?= e($h) ?></th><?php endforeach; ?>
                 </tr>
             </thead>
             <tbody>
@@ -39,18 +34,7 @@
                                 <span class="inline-flex items-center gap-1 text-rose-600 text-xs font-medium"><i class="fa-solid fa-circle-xmark"></i> Skip</span>
                             <?php endif; ?>
                         </td>
-                        <td><?= e($r['unique_number'] ?? '') ?></td>
-                        <td><?= e($r['name'] ?? '') ?></td>
-                        <td><?= e($r['gender'] ?? '') ?></td>
-                        <td><?= e($r['course'] ?? '') ?></td>
-                        <td>
-                            <?php if (($p['mode'] ?? 'new') === 'update'): ?>
-                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">Update</span>
-                            <?php else: ?>
-                                <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">New</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center"><?= (int) ($p['event_count'] ?? 0) ?></td>
+                        <?php foreach ($cols as $c): ?><td><?= e($r[$c] ?? '') ?></td><?php endforeach; ?>
                         <td class="text-xs text-rose-600"><?= e(implode(', ', $p['errors'])) ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -60,10 +44,10 @@
 
     <div class="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-3">
         <p class="text-sm text-slate-500">Only the <strong><?= $validCount ?></strong> valid row(s) will be imported.</p>
-        <form method="post" action="<?= e(url('contestants/bulk/import')) ?>">
+        <form method="post" action="<?= e($importUrl) ?>">
             <?= csrf_field() ?>
             <button type="submit" class="btn btn-primary" <?= $validCount === 0 ? 'disabled' : '' ?>>
-                <i class="fa-solid fa-file-import"></i> Import <?= $validCount ?> Contestant(s)
+                <i class="fa-solid fa-file-import"></i> Import <?= $validCount ?> Row(s)
             </button>
         </form>
     </div>
