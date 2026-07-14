@@ -33,10 +33,10 @@ $gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
 <table>
     <thead>
         <tr><th class="doc-head" colspan="6">
-            <div class="discipline"><?= e($d['discipline_name']) ?></div>
+            <div class="discipline"><?= e($d['meet_title']) ?></div>
             <div class="subhead">
                 <?= e($institution) ?>
-                <span class="sm"><?= e($d['event_name']) ?> &mdash; <?= e($d['category_name']) ?> &middot; <?= e($d['label']) ?></span>
+                <span class="sm"><strong><?= e($d['discipline_name']) ?></strong> &mdash; <?= e($d['event_name']) ?> &middot; <?= e($d['category_name']) ?> &middot; <?= e($d['label']) ?></span>
             </div>
         </th></tr>
         <tr>

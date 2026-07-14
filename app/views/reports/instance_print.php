@@ -62,10 +62,10 @@ $pdfBase = url('reports/instance-contestants/' . $id . '/pdf');
         <table>
             <thead>
                 <tr><th class="doc-head" colspan="6">
-                    <div class="discipline"><?= e($d['discipline_name']) ?></div>
+                    <div class="discipline"><?= e($d['meet_title']) ?></div>
                     <div class="subhead">
                         <?= e($institution) ?>
-                        <small><?= e($d['event_name']) ?> &mdash; <?= e($d['category_name']) ?> &middot; <?= e($d['label']) ?></small>
+                        <small><strong><?= e($d['discipline_name']) ?></strong> &mdash; <?= e($d['event_name']) ?> &middot; <?= e($d['category_name']) ?> &middot; <?= e($d['label']) ?></small>
                     </div>
                 </th></tr>
                 <tr>
