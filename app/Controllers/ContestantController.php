@@ -80,9 +80,9 @@ class ContestantController extends CrudController
                 ['name' => 'guardian_name', 'label' => 'Guardian Name', 'type' => 'text'],
                 ['name' => 'photo', 'label' => 'Photo (JPG/PNG/WEBP, ≤2MB)', 'type' => 'file'],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => true, 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
-                ['name' => 'event_instance_ids', 'label' => 'Event Instances', 'type' => 'multiselect', 'full' => true,
+                ['name' => 'event_instance_ids', 'label' => 'Event Instances', 'type' => 'chips', 'full' => true,
                  'options' => $this->instanceOptions(),
-                 'hint' => 'Hold Ctrl/Cmd to select multiple. These register the contestant for the chosen events.'],
+                 'hint' => 'Pick an event instance and click Add. Added events register this contestant; remove with ✕.'],
             ],
             'search'  => ['unique_number', 'name', 'mobile', 'email'],
             'filters' => [
@@ -276,19 +276,19 @@ class ContestantController extends CrudController
             $params[] = Auth::campusId();
         }
         $rows = Database::instance()->fetchAll(
-            "SELECT ei.id, ei.label, e.name AS event_name, c.name AS category_name, m.title AS meet_title
+            "SELECT ei.id, ei.label
              FROM event_instances ei
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id
              JOIN categories c ON c.id = ei.category_id
              JOIN meet_masters m ON m.id = d.meet_id
              $scope
-             ORDER BY m.title, ei.instance_date, e.name",
+             ORDER BY ei.label ASC",
             $params
         );
         $opts = [];
         foreach ($rows as $r) {
-            $opts[(int) $r['id']] = sprintf('%s · %s (%s) — %s', $r['meet_title'], $r['event_name'], $r['category_name'], $r['label']);
+            $opts[(int) $r['id']] = $r['label'];
         }
         return $opts;
     }

@@ -61,9 +61,62 @@
         });
     }
 
+    // ---------- Chips: dropdown + Add -> removable list ----------
+    function chipCurrentIds(container) {
+        return Array.from(container.querySelectorAll('input[type=hidden]')).map(i => i.value);
+    }
+    function chipClear(container) {
+        const list = container.querySelector('[data-chips-list]');
+        if (list) list.innerHTML = '';
+    }
+    function chipAdd(container, id, label) {
+        id = String(id);
+        if (chipCurrentIds(container).includes(id)) return false;
+        const field = container.getAttribute('data-chips');
+        const list = container.querySelector('[data-chips-list]');
+        const chip = document.createElement('span');
+        chip.className = 'inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium pl-2.5 pr-1 py-1';
+        const text = document.createElement('span');
+        text.textContent = label;
+        chip.appendChild(text);
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = field + '[]';
+        hidden.value = id;
+        chip.appendChild(hidden);
+        const x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-blue-100 hover:text-rose-600';
+        x.setAttribute('aria-label', 'Remove');
+        x.innerHTML = '<i class="fa-solid fa-xmark text-[10px]"></i>';
+        x.addEventListener('click', () => chip.remove());
+        chip.appendChild(x);
+        list.appendChild(chip);
+        return true;
+    }
+    function initChips() {
+        form.querySelectorAll('[data-chips]').forEach(container => {
+            const addBtn = container.querySelector('[data-chips-add]');
+            const src = container.querySelector('[data-chips-source]');
+            if (addBtn && src && !addBtn.dataset.wired) {
+                addBtn.dataset.wired = '1';
+                addBtn.addEventListener('click', () => {
+                    const id = src.value;
+                    if (!id) return;
+                    const label = src.options[src.selectedIndex].text;
+                    if (!chipAdd(container, id, label)) window.Toast.show('Already added.', 'warning');
+                    src.value = '';
+                });
+                src.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); } });
+            }
+        });
+    }
+    initChips();
+
     function resetForm() {
         form.reset();
         form.querySelector('#crudId').value = '';
+        form.querySelectorAll('[data-chips]').forEach(chipClear);
         clearErrors();
     }
 
@@ -91,7 +144,17 @@
                     const input = form.querySelector('[data-field="' + f + '"]');
                     if (!input) return;
                     const val = data[f];
-                    if (input.multiple && Array.isArray(val)) {
+                    if (input.hasAttribute('data-chips')) {
+                        // chips widget: rebuild list from the id array
+                        chipClear(input);
+                        if (Array.isArray(val)) {
+                            const src = input.querySelector('[data-chips-source]');
+                            val.forEach(id => {
+                                const opt = src ? Array.from(src.options).find(o => String(o.value) === String(id)) : null;
+                                chipAdd(input, id, opt ? opt.text : String(id));
+                            });
+                        }
+                    } else if (input.multiple && Array.isArray(val)) {
                         // multi-select: mark matching options selected
                         const set = new Set(val.map(String));
                         Array.from(input.options).forEach(o => { o.selected = set.has(String(o.value)); });

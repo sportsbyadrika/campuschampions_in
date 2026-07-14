@@ -180,6 +180,20 @@ $spanFull   = $formCols > 1 ? "sm:col-span-2 md:col-span-{$formCols}" : '';
                                 <?php endforeach; ?>
                             </select>
                             <?php if (!empty($field['hint'])): ?><p class="mt-1 text-xs text-slate-500"><?= e($field['hint']) ?></p><?php endif; ?>
+                        <?php elseif ($field['type'] === 'chips'): ?>
+                            <div data-field="<?= e($name) ?>" data-chips="<?= e($name) ?>">
+                                <div class="flex gap-2">
+                                    <select class="form-select flex-1" data-chips-source>
+                                        <option value="">— Select event instance —</option>
+                                        <?php foreach (($field['options'] ?? []) as $val => $label): ?>
+                                            <option value="<?= e($val) ?>"><?= e($label) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary shrink-0" data-chips-add><i class="fa-solid fa-plus"></i> Add</button>
+                                </div>
+                                <div class="mt-2 flex flex-wrap gap-2" data-chips-list></div>
+                                <?php if (!empty($field['hint'])): ?><p class="mt-1 text-xs text-slate-500"><?= e($field['hint']) ?></p><?php endif; ?>
+                            </div>
                         <?php else: ?>
                             <input type="<?= e($field['type']) ?>" id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-input" data-field="<?= e($name) ?>" <?= !empty($field['placeholder']) ? 'placeholder="' . e($field['placeholder']) . '"' : '' ?>>
                         <?php endif; ?>
