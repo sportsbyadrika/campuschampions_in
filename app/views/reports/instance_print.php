@@ -33,6 +33,7 @@ $pdfBase = url('reports/instance-contestants/' . $id . '/pdf');
         th.col, td.col { border: 1px solid #94a3b8; padding: .45rem .5rem; font-size: .85rem; }
         th.col { background: #eff6ff; text-align: left; }
         td.remarks { width: 22%; }
+        .sl { width: 7%; text-align: center; }
         .num { width: 12%; }
         .gen { width: 10%; }
         tbody tr:nth-child(even) td { background: #f8fafc; }
@@ -60,7 +61,7 @@ $pdfBase = url('reports/instance-contestants/' . $id . '/pdf');
     <div class="sheet">
         <table>
             <thead>
-                <tr><th class="doc-head" colspan="5">
+                <tr><th class="doc-head" colspan="6">
                     <div class="discipline"><?= e($d['discipline_name']) ?></div>
                     <div class="subhead">
                         <?= e($institution) ?>
@@ -68,6 +69,7 @@ $pdfBase = url('reports/instance-contestants/' . $id . '/pdf');
                     </div>
                 </th></tr>
                 <tr>
+                    <th class="col sl">Sl No</th>
                     <th class="col num">Unique #</th>
                     <th class="col">Name</th>
                     <th class="col">Class/Division</th>
@@ -77,9 +79,10 @@ $pdfBase = url('reports/instance-contestants/' . $id . '/pdf');
             </thead>
             <tbody>
                 <?php if (empty($participants)): ?>
-                    <tr><td class="col" colspan="5" style="text-align:center;color:#64748b;">No participants registered.</td></tr>
-                <?php else: foreach ($participants as $p): ?>
+                    <tr><td class="col" colspan="6" style="text-align:center;color:#64748b;">No participants registered.</td></tr>
+                <?php else: $sl = 0; foreach ($participants as $p): $sl++; ?>
                     <tr>
+                        <td class="col sl"><?= $sl ?></td>
                         <td class="col num"><?= e($p['unique_number']) ?></td>
                         <td class="col"><?= e($p['name']) ?></td>
                         <td class="col"><?= e($classOf($p['course_name'], $p['division_name'])) ?></td>

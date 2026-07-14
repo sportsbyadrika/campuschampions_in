@@ -378,12 +378,16 @@ class ReportsController extends Controller
     public function instanceCsv(string $instanceId): void
     {
         $d = $this->instanceForReport((int) $instanceId);
-        $data = array_map(fn($p) => [
-            $p['unique_number'], $p['name'],
-            trim(($p['course_name'] ?? '') . ' / ' . ($p['division_name'] ?? ''), ' /'),
-            $this->gender($p['gender']), '',
-        ], $d['participants']);
-        Csv::download('participants_' . (int) $instanceId, ['Unique #', 'Name', 'Class/Division', 'Gender', 'Remarks'], $data);
+        $sl = 0;
+        $data = array_map(function ($p) use (&$sl) {
+            $sl++;
+            return [
+                $sl, $p['unique_number'], $p['name'],
+                trim(($p['course_name'] ?? '') . ' / ' . ($p['division_name'] ?? ''), ' /'),
+                $this->gender($p['gender']), '',
+            ];
+        }, $d['participants']);
+        Csv::download('participants_' . (int) $instanceId, ['Sl No', 'Unique #', 'Name', 'Class/Division', 'Gender', 'Remarks'], $data);
     }
 
     // ==================================================================

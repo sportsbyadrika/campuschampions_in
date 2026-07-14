@@ -23,6 +23,7 @@ $gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
     th.col, td.col { border: 0.6px solid #94a3b8; padding: 4px 5px; }
     th.col { background: #eff6ff; text-align: left; font-size: 10px; }
     td.col { font-size: 10px; }
+    .sl { width: 7%; text-align: center; }
     .num { width: 12%; }
     .gen { width: 10%; }
     .remarks { width: 22%; }
@@ -31,7 +32,7 @@ $gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
 <body>
 <table>
     <thead>
-        <tr><th class="doc-head" colspan="5">
+        <tr><th class="doc-head" colspan="6">
             <div class="discipline"><?= e($d['discipline_name']) ?></div>
             <div class="subhead">
                 <?= e($institution) ?>
@@ -39,6 +40,7 @@ $gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
             </div>
         </th></tr>
         <tr>
+            <th class="col sl">Sl No</th>
             <th class="col num">Unique #</th>
             <th class="col">Name</th>
             <th class="col">Class/Division</th>
@@ -48,9 +50,10 @@ $gender = fn($g) => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'][$g] ?? '';
     </thead>
     <tbody>
         <?php if (empty($participants)): ?>
-            <tr><td class="col" colspan="5" style="text-align:center;">No participants registered.</td></tr>
-        <?php else: foreach ($participants as $p): ?>
+            <tr><td class="col" colspan="6" style="text-align:center;">No participants registered.</td></tr>
+        <?php else: $sl = 0; foreach ($participants as $p): $sl++; ?>
             <tr>
+                <td class="col sl"><?= $sl ?></td>
                 <td class="col num"><?= e($p['unique_number']) ?></td>
                 <td class="col"><?= e($p['name']) ?></td>
                 <td class="col"><?= e($classOf($p['course_name'], $p['division_name'])) ?></td>
