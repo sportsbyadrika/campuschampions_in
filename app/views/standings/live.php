@@ -53,8 +53,9 @@ $dataUrl = url('standings/live-data/' . $meetId);
         .panel > .head { padding: 1.1vh 1.2vw; border-bottom: 1px solid var(--line); font-size: 2vh; font-weight: 700; color: #fff; display: flex; align-items: center; gap: .5vw; }
         .panel > .head .dot { color: var(--gold); }
         .panel > .body { padding: 1vh 1.2vw; overflow: hidden; flex: 1; min-height: 0; }
-        .left-house { flex: 1; }
-        .left-cd { flex: 1; }
+        .left-house { flex: none; }                 /* compact: sized to <= 5 rows */
+        .left-cd { flex: 1; min-height: 0; }         /* takes the rest -> ~12 rows */
+        .left-cd > .body { overflow-y: auto; }
 
         /* ---- House standings ---- */
         .house { display: flex; align-items: center; gap: .7vw; margin-bottom: 1.3vh; }
@@ -114,7 +115,7 @@ $dataUrl = url('standings/live-data/' . $meetId);
                 <div class="body" id="housePanel"><div class="loading">Loading…</div></div>
             </div>
             <div class="panel left-cd">
-                <div class="head"><span class="dot">🎓</span> By Course / Division</div>
+                <div class="head"><span class="dot">🎓</span> Class / Division</div>
                 <div class="body" id="cdPanel"><div class="loading">Loading…</div></div>
             </div>
         </div>
@@ -135,7 +136,7 @@ $dataUrl = url('standings/live-data/' . $meetId);
 (function () {
     'use strict';
     var DATA_URL = <?= json_encode($dataUrl, JSON_UNESCAPED_SLASHES) ?>;
-    var REFRESH_MS = 60000;   // one minute
+    var REFRESH_MS = 30000;   // 30 seconds
     var SPEED = 28;           // px per second
 
     function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
@@ -155,6 +156,7 @@ $dataUrl = url('standings/live-data/' . $meetId);
     // ---------- Renderers ----------
     function renderHouses(houses) {
         if (!houses.length) return '<div class="loading">No results yet.</div>';
+        houses = houses.slice(0, 5); // show top 5 houses only
         var max = 0; houses.forEach(function (h) { max = Math.max(max, h.points); });
         var rank = ['🥇','🥈','🥉'];
         return houses.map(function (h, i) {
@@ -200,34 +202,40 @@ $dataUrl = url('standings/live-data/' . $meetId);
     // ---------- Seamless auto-scroll ----------
     var track = document.getElementById('track');
     var scroller = document.getElementById('scroller');
-    var offset = 0, copyH = 0, last = null;
+    var offset = 0, copyH = 0, last = null, needScroll = false, lastHtml = '';
 
     function buildWinners(events) {
-        var html = winnersTable(events);
-        // Two identical copies stacked for a seamless loop
-        track.innerHTML = '<div class="copy">' + html + '</div><div class="copy" aria-hidden="true">' + html + '</div>';
-        measure();
+        lastHtml = winnersTable(events);
+        layoutWinners();
     }
-    function measure() {
+    // Show a single copy; only add a duplicate (for a seamless loop) when the
+    // content actually overflows and needs to scroll.
+    function layoutWinners() {
+        track.innerHTML = '<div class="copy">' + lastHtml + '</div>';
         var copy = track.querySelector('.copy');
         copyH = copy ? copy.offsetHeight : 0;
-        if (offset > copyH && copyH > 0) offset = offset % copyH;
+        if (copyH > scroller.clientHeight + 4) {
+            track.insertAdjacentHTML('beforeend', '<div class="copy" aria-hidden="true">' + lastHtml + '</div>');
+            needScroll = true;
+            if (copyH > 0 && offset >= copyH) offset = offset % copyH;
+        } else {
+            needScroll = false;
+            offset = 0;
+            track.style.transform = 'translateY(0)';
+        }
     }
     function frame(ts) {
         if (last == null) last = ts;
         var dt = (ts - last) / 1000; last = ts;
-        // Only scroll when content overflows the visible area
-        if (copyH > scroller.clientHeight + 4) {
+        if (needScroll && copyH > 0) {
             offset += SPEED * dt;
             if (offset >= copyH) offset -= copyH;
-        } else {
-            offset = 0;
+            track.style.transform = 'translateY(' + (-offset) + 'px)';
         }
-        track.style.transform = 'translateY(' + (-offset) + 'px)';
         requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    window.addEventListener('resize', measure);
+    window.addEventListener('resize', function () { if (lastHtml) layoutWinners(); });
 
     // ---------- Data load ----------
     function apply(data) {

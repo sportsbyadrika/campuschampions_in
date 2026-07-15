@@ -159,7 +159,7 @@ $winnerCell = function (array $list) use ($classOf) {
     <!-- ===================== Panel 4: By Course / Division ===================== -->
     <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
         <div class="flex items-center justify-between p-4 border-b border-slate-100">
-            <h2 class="font-semibold text-slate-900">By Course / Division</h2>
+            <h2 class="font-semibold text-slate-900">Class / Division</h2>
             <a href="<?= e(url('standings/export/course-divisions?meet_id=' . $meetId)) ?>" class="btn btn-secondary btn-sm"><i class="fa-solid fa-file-csv"></i> Export</a>
         </div>
         <div class="overflow-x-auto">
