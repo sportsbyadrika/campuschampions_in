@@ -55,7 +55,6 @@ $dataUrl = url('standings/live-data/' . $meetId);
         .panel > .body { padding: 1vh 1.2vw; overflow: hidden; flex: 1; min-height: 0; }
         .left-house { flex: none; }                 /* compact: sized to <= 5 rows */
         .left-cd { flex: 1; min-height: 0; }         /* takes the rest -> ~12 rows */
-        .left-cd > .body { overflow-y: auto; }
 
         /* ---- House standings ---- */
         .house { display: flex; align-items: center; gap: .7vw; margin-bottom: 1.3vh; }
@@ -116,7 +115,9 @@ $dataUrl = url('standings/live-data/' . $meetId);
             </div>
             <div class="panel left-cd">
                 <div class="head"><span class="dot">🎓</span> Class / Division</div>
-                <div class="body" id="cdPanel"><div class="loading">Loading…</div></div>
+                <div class="body">
+                    <div class="scroller" id="cdScroller"><div class="track" id="cdTrack"><div class="loading">Loading…</div></div></div>
+                </div>
             </div>
         </div>
         <div class="col">
@@ -199,43 +200,50 @@ $dataUrl = url('standings/live-data/' . $meetId);
         return '<table class="wtable"><thead><tr><th style="width:28%">Event Instance</th><th>🥇 First</th><th>🥈 Second</th><th>🥉 Third</th></tr></thead><tbody>' + rows + '</tbody></table>';
     }
 
-    // ---------- Seamless auto-scroll ----------
-    var track = document.getElementById('track');
-    var scroller = document.getElementById('scroller');
-    var offset = 0, copyH = 0, last = null, needScroll = false, lastHtml = '';
-
-    function buildWinners(events) {
-        lastHtml = winnersTable(events);
-        layoutWinners();
-    }
-    // Show a single copy; only add a duplicate (for a seamless loop) when the
+    // ---------- Seamless auto-scroll (reusable marquee) ----------
+    // Shows a single copy; only adds a duplicate (for a seamless loop) when the
     // content actually overflows and needs to scroll.
-    function layoutWinners() {
-        track.innerHTML = '<div class="copy">' + lastHtml + '</div>';
-        var copy = track.querySelector('.copy');
-        copyH = copy ? copy.offsetHeight : 0;
-        if (copyH > scroller.clientHeight + 4) {
-            track.insertAdjacentHTML('beforeend', '<div class="copy" aria-hidden="true">' + lastHtml + '</div>');
-            needScroll = true;
-            if (copyH > 0 && offset >= copyH) offset = offset % copyH;
-        } else {
-            needScroll = false;
-            offset = 0;
-            track.style.transform = 'translateY(0)';
+    function makeMarquee(scrollerEl, trackEl) {
+        var offset = 0, copyH = 0, needScroll = false, html = '';
+        function set(h) { html = h; layout(); }
+        function layout() {
+            trackEl.innerHTML = '<div class="copy">' + html + '</div>';
+            var copy = trackEl.querySelector('.copy');
+            copyH = copy ? copy.offsetHeight : 0;
+            if (copyH > scrollerEl.clientHeight + 4) {
+                trackEl.insertAdjacentHTML('beforeend', '<div class="copy" aria-hidden="true">' + html + '</div>');
+                needScroll = true;
+                if (copyH > 0 && offset >= copyH) offset = offset % copyH;
+            } else {
+                needScroll = false;
+                offset = 0;
+                trackEl.style.transform = 'translateY(0)';
+            }
         }
+        function step(dt) {
+            if (needScroll && copyH > 0) {
+                offset += SPEED * dt;
+                if (offset >= copyH) offset -= copyH;
+                trackEl.style.transform = 'translateY(' + (-offset) + 'px)';
+            }
+        }
+        function has() { return html !== ''; }
+        return { set: set, layout: layout, step: step, has: has };
     }
+
+    var winMarquee = makeMarquee(document.getElementById('scroller'), document.getElementById('track'));
+    var cdMarquee  = makeMarquee(document.getElementById('cdScroller'), document.getElementById('cdTrack'));
+    var marquees = [winMarquee, cdMarquee];
+
+    var last = null;
     function frame(ts) {
         if (last == null) last = ts;
         var dt = (ts - last) / 1000; last = ts;
-        if (needScroll && copyH > 0) {
-            offset += SPEED * dt;
-            if (offset >= copyH) offset -= copyH;
-            track.style.transform = 'translateY(' + (-offset) + 'px)';
-        }
+        marquees.forEach(function (m) { m.step(dt); });
         requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    window.addEventListener('resize', function () { if (lastHtml) layoutWinners(); });
+    window.addEventListener('resize', function () { marquees.forEach(function (m) { if (m.has()) m.layout(); }); });
 
     // ---------- Data load ----------
     function apply(data) {
@@ -245,8 +253,8 @@ $dataUrl = url('standings/live-data/' . $meetId);
             document.getElementById('logo').textContent = (data.institution || 'C').charAt(0).toUpperCase();
         }
         document.getElementById('housePanel').innerHTML = renderHouses(data.houses || []);
-        document.getElementById('cdPanel').innerHTML = renderCd(data.courseDivisions || []);
-        buildWinners(data.events || []);
+        cdMarquee.set(renderCd(data.courseDivisions || []));
+        winMarquee.set(winnersTable(data.events || []));
     }
     function load() {
         fetch(DATA_URL, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
