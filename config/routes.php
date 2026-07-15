@@ -74,6 +74,8 @@ $router->post('/contestants/bulk/import',    'ContestantBulkController@import', 
 $router->get('/contestants/bulk-edit',           'ContestantBulkEditController@form',      ['auth']);
 $router->post('/contestants/bulk-edit',          'ContestantBulkEditController@update',    ['auth']);
 $router->post('/contestants/bulk-edit/row/{id}', 'ContestantBulkEditController@updateRow', ['auth']);
+$router->get('/contestants/change-instance',     'ContestantInstanceController@form',      ['auth']);
+$router->post('/contestants/change-instance',    'ContestantInstanceController@apply',     ['auth']);
 
 $crud('contestants',             'ContestantController');
 $crud('meets',                   'MeetController');

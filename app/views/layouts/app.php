@@ -64,6 +64,7 @@ $user = Auth::user();
                                 <a href="<?= e(url('course-category-groups')) ?>" class="dropdown-item">Category Groups</a>
                                 <div class="my-1 border-t border-slate-100"></div>
                                 <a href="<?= e(url('contestants')) ?>" class="dropdown-item">Contestants</a>
+                                <a href="<?= e(url('contestants/change-instance')) ?>" class="dropdown-item">Change Event Instance</a>
                                 <a href="<?= e(url('users')) ?>" class="dropdown-item">Users</a>
                             </div>
                         </div>
@@ -73,6 +74,11 @@ $user = Auth::user();
                         <!-- Event users / staff can add-edit contestants (no full Masters menu) -->
                         <a href="<?= e(url('contestants')) ?>" class="nav-link <?= active_if('/contestants') ?>">
                             <i class="fa-solid fa-user-group mr-1.5"></i>Contestants
+                        </a>
+                    <?php endif; ?>
+                    <?php if (can('event_user')): ?>
+                        <a href="<?= e(url('contestants/change-instance')) ?>" class="nav-link <?= active_if('/contestants/change-instance') ?>">
+                            <i class="fa-solid fa-right-left mr-1.5"></i>Change Instance
                         </a>
                     <?php endif; ?>
 
@@ -147,6 +153,9 @@ $user = Auth::user();
             <a href="<?= e(url('users')) ?>" class="mobile-link">Users</a>
         <?php elseif (can('event_user', 'campus_staff')): ?>
             <a href="<?= e(url('contestants')) ?>" class="mobile-link">Contestants</a>
+        <?php endif; ?>
+        <?php if (can('campus_admin', 'event_user')): ?>
+            <a href="<?= e(url('contestants/change-instance')) ?>" class="mobile-link">Change Event Instance</a>
         <?php endif; ?>
         <a href="<?= e(url('meets')) ?>" class="mobile-link">Meets</a>
         <?php if (can('super_admin', 'campus_admin', 'event_user')): ?>
