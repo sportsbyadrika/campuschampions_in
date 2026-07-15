@@ -40,7 +40,7 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
             background: rgba(255,255,255,.05); border: 1px solid var(--line);
             border-radius: 16px; padding: 1.1vh 1.5vw; backdrop-filter: blur(6px);
         }
-        .brand-left { display: flex; align-items: center; gap: 1vw; }
+        .brand-left { display: flex; align-items: center; gap: 1vw; cursor: pointer; }
         .logo {
             width: 7vh; height: 7vh; min-width: 7vh; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
@@ -122,7 +122,7 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
 <div class="board">
     <!-- Banner -->
     <div class="banner">
-        <div class="brand-left">
+        <div class="brand-left" id="fsToggle" title="Click to toggle full screen">
             <?php if ($institutionLogo): ?>
                 <img class="inst-logo" src="<?= e($institutionLogo) ?>" alt="<?= e($institution) ?>">
             <?php else: ?>
@@ -192,6 +192,22 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
     }
     setInterval(tick, 1000); tick();
 
+    // ---------- Full-screen toggle (click the left logo) ----------
+    var fsToggle = document.getElementById('fsToggle');
+    if (fsToggle) {
+        fsToggle.addEventListener('click', function () {
+            var d = document, el = d.documentElement;
+            var isFs = d.fullscreenElement || d.webkitFullscreenElement;
+            if (!isFs) {
+                var req = el.requestFullscreen || el.webkitRequestFullscreen;
+                if (req) { try { var p = req.call(el); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+            } else {
+                var exit = d.exitFullscreen || d.webkitExitFullscreen;
+                if (exit) { try { exit.call(d); } catch (e) {} }
+            }
+        });
+    }
+
     // ---------- Renderers ----------
     function renderHouses(houses) {
         if (!houses.length) return '<div class="loading">No results yet.</div>';
@@ -229,7 +245,10 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
 
     function metaLine(w) {
         var parts = [];
-        if (w.house) parts.push('<span class="wh">' + esc(w.house) + '</span>');
+        if (w.house) {
+            var style = w.houseColor ? ' style="color:' + esc(w.houseColor) + '"' : '';
+            parts.push('<span class="wh"' + style + '>' + esc(w.house) + '</span>');
+        }
         if (w.cls)   parts.push('<span class="wc">' + esc(w.cls) + '</span>');
         if (!parts.length) return '';
         return '<div class="wm">' + parts.join('<span class="wsep"> · </span>') + '</div>';

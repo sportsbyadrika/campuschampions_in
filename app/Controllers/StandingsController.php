@@ -39,12 +39,14 @@ class StandingsController extends Controller
                 $this->abort(404, 'Meet not found.');
             }
             $standing = new Standing();
-            $houses = $standing->houses($meetId);
-            $disciplines = $standing->disciplines($meetId);
-            $courseDivisions = $standing->courseDivisions($meetId);
+            // The standings page shows PUBLISHED results only.
+            $houses = $standing->houses($meetId, true);
+            $disciplines = $standing->disciplines($meetId, true);
+            $courseDivisions = $standing->courseDivisions($meetId, true);
+            $topScorers = $this->topScorersByGroup($standing->groupAdmissionScores($meetId, true));
 
             // Group prize winners by event instance, then by position (for the table)
-            foreach ($standing->eventResults($meetId) as $r) {
+            foreach ($standing->eventResults($meetId, true) as $r) {
                 $key = (int) $r['instance_id'];
                 if (!isset($events[$key])) {
                     $events[$key] = [
@@ -73,7 +75,38 @@ class StandingsController extends Controller
             'events'          => $events,
             'disciplines'     => $disciplines,
             'courseDivisions' => $courseDivisions,
+            'topScorers'      => $topScorers ?? [],
         ]);
+    }
+
+    /**
+     * Top scorers per category group, deduped by admission number (blank
+     * admission => the contestant is its own entry). Name taken from the first
+     * row (rows arrive ordered by name). Each group keeps its highest $limit.
+     */
+    private function topScorersByGroup(array $rows, int $limit = 5): array
+    {
+        $groups = []; // group_id => ['name' => , 'people' => [key => [...]]]
+        foreach ($rows as $r) {
+            $gid = (int) $r['group_id'];
+            if (!isset($groups[$gid])) {
+                $groups[$gid] = ['name' => $r['group_name'], 'people' => []];
+            }
+            $adm = trim((string) $r['admission_number']);
+            $key = $adm !== '' ? 'a:' . $adm : 'c:' . (int) $r['contestant_id'];
+            if (!isset($groups[$gid]['people'][$key])) {
+                $groups[$gid]['people'][$key] = ['admission' => $adm ?: '—', 'name' => $r['name'], 'points' => 0.0];
+            }
+            $groups[$gid]['people'][$key]['points'] += (float) $r['points'];
+        }
+        $out = [];
+        foreach ($groups as $g) {
+            $people = array_values($g['people']);
+            usort($people, fn($a, $b) => $b['points'] <=> $a['points'] ?: strcmp($a['name'], $b['name']));
+            $out[] = ['group' => $g['name'], 'scorers' => array_slice($people, 0, $limit)];
+        }
+        usort($out, fn($a, $b) => strcmp($a['group'], $b['group']));
+        return $out;
     }
 
     // ------------------------------------------------------------------
@@ -178,9 +211,10 @@ class StandingsController extends Controller
             $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
             if (isset($byInst[$key][$r['position']])) {
                 $byInst[$key][$r['position']][] = [
-                    'name'  => $r['contestant_name'],
-                    'house' => $r['house_name'] ?? '',
-                    'cls'   => $cls,
+                    'name'       => $r['contestant_name'],
+                    'house'      => $r['house_name'] ?? '',
+                    'houseColor' => $r['house_color'] ?? '',
+                    'cls'        => $cls,
                 ];
             }
         }
@@ -215,7 +249,7 @@ class StandingsController extends Controller
             $rows = array_map(fn($h) => [
                 $h['name'], (int) $h['golds'], (int) $h['silvers'], (int) $h['bronzes'],
                 rtrim(rtrim(number_format((float) $h['total_points'], 2), '0'), '.'),
-            ], $standing->houses($meetId));
+            ], $standing->houses($meetId, true));
             Csv::download('house_standings', ['House', 'First', 'Second', 'Third', 'Total Points'], $rows);
         }
 
@@ -223,7 +257,7 @@ class StandingsController extends Controller
             $rows = array_map(fn($d) => [
                 $d['discipline_name'], (int) $d['golds'], (int) $d['silvers'], (int) $d['bronzes'],
                 rtrim(rtrim(number_format((float) $d['total_points'], 2), '0'), '.'),
-            ], $standing->disciplines($meetId));
+            ], $standing->disciplines($meetId, true));
             Csv::download('discipline_standings', ['Discipline', 'First', 'Second', 'Third', 'Total Points'], $rows);
         }
 
@@ -232,7 +266,7 @@ class StandingsController extends Controller
                 trim(($d['course_name'] ?? '—') . ' / ' . ($d['division_name'] ?? '—'), ' /'),
                 (int) $d['golds'], (int) $d['silvers'], (int) $d['bronzes'],
                 rtrim(rtrim(number_format((float) $d['total_points'], 2), '0'), '.'),
-            ], $standing->courseDivisions($meetId));
+            ], $standing->courseDivisions($meetId, true));
             Csv::download('course_division_standings', ['Course/Division', 'First', 'Second', 'Third', 'Total Points'], $rows);
         }
 
@@ -241,7 +275,7 @@ class StandingsController extends Controller
             $r['discipline_name'], $r['instance_label'], $r['category_name'],
             $this->posLabel($r['position']), $r['unique_number'], $r['contestant_name'],
             $r['house_name'] ?? '', trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /'),
-        ], $standing->eventResults($meetId));
+        ], $standing->eventResults($meetId, true));
         Csv::download('event_winners', ['Discipline', 'Event Instance', 'Category', 'Position', 'Unique #', 'Contestant', 'House', 'Course/Division'], $rows);
     }
 }

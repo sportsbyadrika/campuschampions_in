@@ -15,8 +15,9 @@ class Standing
     public function __construct() { $this->db = Database::instance(); }
 
     /** House-wise total points + gold/silver/bronze counts for a meet. */
-    public function houses(int $meetId): array
+    public function houses(int $meetId, bool $publishedOnly = false): array
     {
+        $publishSql = $publishedOnly ? ' AND ei.results_published = 1' : '';
         return $this->db->fetchAll(
             "SELECT h.id, h.name, h.color_code,
                     COALESCE(SUM(r.points), 0) AS total_points,
@@ -30,7 +31,7 @@ class Standing
              JOIN event_instances ei ON ei.id = r.event_instance_id
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id
-             WHERE d.meet_id = ?
+             WHERE d.meet_id = ?" . $publishSql . "
              GROUP BY h.id, h.name, h.color_code
              ORDER BY total_points DESC, golds DESC, h.name ASC",
             [$meetId]
@@ -50,7 +51,7 @@ class Standing
                     d.name AS discipline_name, e.name AS event_name, c.name AS category_name,
                     r.position, r.points,
                     cm.unique_number, cm.name AS contestant_name,
-                    h.name AS house_name, co.name AS course_name, dv.name AS division_name
+                    h.name AS house_name, h.color_code AS house_color, co.name AS course_name, dv.name AS division_name
              FROM results r
              JOIN event_instances ei ON ei.id = r.event_instance_id
              JOIN event_masters e ON e.id = ei.event_id
@@ -69,8 +70,9 @@ class Standing
     }
 
     /** Course/Division-wise medal counts + total points, ordered by points. */
-    public function courseDivisions(int $meetId): array
+    public function courseDivisions(int $meetId, bool $publishedOnly = false): array
     {
+        $publishSql = $publishedOnly ? ' AND ei.results_published = 1' : '';
         return $this->db->fetchAll(
             "SELECT co.name AS course_name, dv.name AS division_name,
                     SUM(CASE WHEN r.position='first'  THEN 1 ELSE 0 END) AS golds,
@@ -84,7 +86,7 @@ class Standing
              JOIN discipline_masters d ON d.id = e.discipline_id
              LEFT JOIN courses co ON co.id = cm.course_id
              LEFT JOIN divisions dv ON dv.id = cm.division_id
-             WHERE d.meet_id = ?
+             WHERE d.meet_id = ?" . $publishSql . "
              GROUP BY cm.course_id, cm.division_id
              ORDER BY total_points DESC, golds DESC, co.name ASC",
             [$meetId]
@@ -118,8 +120,9 @@ class Standing
     }
 
     /** Discipline-wise medal counts + total points, ordered by points. */
-    public function disciplines(int $meetId): array
+    public function disciplines(int $meetId, bool $publishedOnly = false): array
     {
+        $publishSql = $publishedOnly ? ' AND ei.results_published = 1' : '';
         return $this->db->fetchAll(
             "SELECT d.id, d.name AS discipline_name,
                     SUM(CASE WHEN r.position='first'  THEN 1 ELSE 0 END) AS golds,
@@ -130,9 +133,34 @@ class Standing
              JOIN event_instances ei ON ei.id = r.event_instance_id
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id
-             WHERE d.meet_id = ?
+             WHERE d.meet_id = ?" . $publishSql . "
              GROUP BY d.id, d.name
              ORDER BY total_points DESC, golds DESC, d.name ASC",
+            [$meetId]
+        );
+    }
+
+    /**
+     * Points per (category group, contestant) — raw rows for building a
+     * "top scorers per category group" list. Aggregated per contestant so a
+     * later pass can dedupe by admission number. Ordered by group then name.
+     */
+    public function groupAdmissionScores(int $meetId, bool $publishedOnly = false): array
+    {
+        $publishSql = $publishedOnly ? ' AND ei.results_published = 1' : '';
+        return $this->db->fetchAll(
+            "SELECT g.id AS group_id, g.name AS group_name,
+                    cm.id AS contestant_id, cm.admission_number, cm.name,
+                    COALESCE(SUM(r.points), 0) AS points
+             FROM results r
+             JOIN contestant_masters cm ON cm.id = r.contestant_id
+             JOIN course_category_groups g ON g.id = cm.course_category_group_id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             WHERE d.meet_id = ?" . $publishSql . "
+             GROUP BY g.id, g.name, cm.id, cm.admission_number, cm.name
+             ORDER BY g.name ASC, cm.name ASC",
             [$meetId]
         );
     }

@@ -129,6 +129,7 @@
             var field = sess.field;
             canvas.toBlob(function (blob) {
                 fields[field].blob = blob;
+                fields[field].filename = field + '.png';
                 fields[field].remove = false;
                 showPreview(field, URL.createObjectURL(blob));
                 closeModal();
@@ -166,7 +167,16 @@
 
         block.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
         fileInput.addEventListener('change', function () {
-            if (fileInput.files && fileInput.files[0]) startCrop(field, fileInput.files[0]);
+            var file = fileInput.files && fileInput.files[0];
+            if (file) {
+                if (MEET.crop[field]) {
+                    startCrop(field, file);          // fields with a crop config
+                } else {
+                    // No crop config (e.g. banner): upload the file as-is.
+                    f.blob = file; f.remove = false; f.filename = file.name || (field + '.img');
+                    showPreview(field, URL.createObjectURL(file));
+                }
+            }
             fileInput.value = ''; // allow re-picking the same file
         });
         if (f.removeBtn) {
@@ -183,7 +193,7 @@
         fd.append('winners_scroll_speed', speed ? speed.value : '28');
         Object.keys(fields).forEach(function (field) {
             var f = fields[field];
-            if (f.blob) fd.append(field, f.blob, field + '.png');
+            if (f.blob) fd.append(field, f.blob, f.filename || (field + '.png'));
             else if (f.remove) fd.append('remove_' + field, '1');
         });
         btn.disabled = true;

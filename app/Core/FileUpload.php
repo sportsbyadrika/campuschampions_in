@@ -29,18 +29,25 @@ class FileUpload
             throw new \RuntimeException('Image must be 2 MB or smaller.');
         }
 
-        // Verify real MIME type from content, not the client-provided one
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($file['tmp_name']);
-        if (!isset(self::ALLOWED[$mime])) {
-            throw new \RuntimeException('Only JPG, PNG or WEBP images are allowed.');
-        }
-
-        // Confirm it's a real image with sane dimensions
+        // Confirm it's a real image (getimagesize parses the content) and read
+        // its MIME from the parsed data — this does NOT require the fileinfo
+        // extension, which is not always available on shared hosting.
         $info = @getimagesize($file['tmp_name']);
         if ($info === false) {
             throw new \RuntimeException('The uploaded file is not a valid image.');
         }
+        $mime = $info['mime'] ?? '';
+        // If the fileinfo extension is available, use it as an extra content check.
+        if (function_exists('finfo_open')) {
+            $detected = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+            if ($detected) {
+                $mime = $detected;
+            }
+        }
+        if (!isset(self::ALLOWED[$mime])) {
+            throw new \RuntimeException('Only JPG, PNG or WEBP images are allowed.');
+        }
+
         [$width, $height] = $info;
         if ($width < 20 || $height < 20 || $width > 5000 || $height > 5000) {
             throw new \RuntimeException('Image dimensions are out of the allowed range.');

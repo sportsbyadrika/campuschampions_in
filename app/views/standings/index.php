@@ -123,14 +123,15 @@ $winnerCell = function (array $list) use ($classOf) {
     </div>
 </div>
 
-<div class="mt-6 grid gap-6 lg:grid-cols-2">
-    <!-- ===================== Panel 3: By Discipline ===================== -->
+<div class="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
+  <div class="space-y-6">
+    <!-- ===================== Panel 3: By Discipline (compact) ===================== -->
     <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
         <div class="flex items-center justify-between p-4 border-b border-slate-100">
             <h2 class="font-semibold text-slate-900">By Discipline</h2>
             <a href="<?= e(url('standings/export/disciplines?meet_id=' . $meetId)) ?>" class="btn btn-secondary btn-sm"><i class="fa-solid fa-file-csv"></i> Export</a>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto max-h-56 overflow-y-auto">
             <table class="data-table">
                 <thead><tr>
                     <th>Discipline</th>
@@ -155,6 +156,36 @@ $winnerCell = function (array $list) use ($classOf) {
             </table>
         </div>
     </div>
+
+    <!-- ============ Panel 5: Top Scorers by Category Group ============ -->
+    <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="p-4 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900">Top Scorers · Category Group</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Top 5 per category group (by admission number).</p>
+        </div>
+        <div class="p-4 space-y-5">
+            <?php if (empty($topScorers)): ?>
+                <p class="text-center py-6 text-slate-400">No results recorded yet.</p>
+            <?php else: foreach ($topScorers as $g): ?>
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-primary mb-1.5"><?= e($g['group']) ?></div>
+                    <ol class="space-y-1">
+                        <?php foreach ($g['scorers'] as $i => $s): ?>
+                            <li class="flex items-center gap-2 text-sm">
+                                <span class="w-5 shrink-0 text-center font-semibold text-slate-400"><?= $i + 1 ?></span>
+                                <span class="flex-1 min-w-0 truncate">
+                                    <span class="font-medium text-slate-900"><?= e($s['name']) ?></span>
+                                    <span class="text-xs text-slate-400 ml-1"><?= e($s['admission']) ?></span>
+                                </span>
+                                <span class="shrink-0 font-semibold text-slate-900"><?= e($num($s['points'])) ?> pts</span>
+                            </li>
+                        <?php endforeach; ?>
+                    </ol>
+                </div>
+            <?php endforeach; endif; ?>
+        </div>
+    </div>
+  </div>
 
     <!-- ===================== Panel 4: By Course / Division ===================== -->
     <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">

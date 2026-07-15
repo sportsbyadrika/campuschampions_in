@@ -44,16 +44,16 @@ $statusSel = fn($cur, $val) => $cur === $val ? 'selected' : '';
 
 <!-- ============ Live Screen ============ -->
 <?php
-$liveImg = function (string $field, string $title, string $hint, string $ratioLabel, ?string $current) {
+$liveImg = function (string $field, string $title, string $hint, string $ratioLabel, ?string $current, bool $crop = true) {
     $url = $current ? asset($current) : '';
     ?>
     <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200" data-crop-field="<?= e($field) ?>">
         <div class="flex items-start justify-between gap-2">
             <div>
                 <h3 class="font-semibold text-slate-900"><?= e($title) ?></h3>
-                <p class="text-xs text-slate-500 mt-0.5"><?= e($hint) ?> · Crop <?= e($ratioLabel) ?></p>
+                <p class="text-xs text-slate-500 mt-0.5"><?= e($hint) ?><?= $crop ? ' · Crop ' . e($ratioLabel) : '' ?></p>
             </div>
-            <span class="text-[11px] font-medium text-slate-400"><?= e($ratioLabel) ?></span>
+            <?php if ($crop): ?><span class="text-[11px] font-medium text-slate-400"><?= e($ratioLabel) ?></span><?php endif; ?>
         </div>
         <div class="mt-3 flex items-center gap-4">
             <div class="crop-preview flex items-center justify-center rounded-lg bg-slate-100 ring-1 ring-slate-200 overflow-hidden" data-preview>
@@ -62,7 +62,9 @@ $liveImg = function (string $field, string $title, string $hint, string $ratioLa
             </div>
             <div class="flex flex-col gap-2">
                 <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" data-file>
-                <button type="button" class="btn btn-secondary btn-sm" data-pick><i class="fa-solid fa-crop-simple"></i> Choose &amp; crop</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-pick>
+                    <i class="fa-solid <?= $crop ? 'fa-crop-simple' : 'fa-image' ?>"></i> <?= $crop ? 'Choose &amp; crop' : 'Choose image' ?>
+                </button>
                 <button type="button" class="btn btn-secondary btn-sm text-rose-600 <?= $url ? '' : 'hidden' ?>" data-remove><i class="fa-solid fa-trash"></i> Remove</button>
             </div>
         </div>
@@ -81,7 +83,7 @@ $liveImg = function (string $field, string $title, string $hint, string $ratioLa
         <?php
         $liveImg('logo', 'Meet Logo', 'Shown centered in the top banner', '3 : 1 (wide)', $meet['logo_path'] ?? null);
         $liveImg('institution_logo', 'Institution Logo', 'Shown on the left of the banner', '1 : 1 (square)', $meet['institution_logo_path'] ?? null);
-        $liveImg('banner', 'Banner Image', 'Optional tall banner for the meet', '1 : 4 (tall)', $meet['banner_path'] ?? null);
+        $liveImg('banner', 'Banner Image', 'Optional banner image for the meet (uploaded as-is)', '', $meet['banner_path'] ?? null, false);
         ?>
     </div>
 
@@ -272,8 +274,7 @@ $modal('instances', 'Event Instance',
     base: <?= json_encode(url('meets/' . (int) $meet['id']), JSON_UNESCAPED_SLASHES) ?>,
     crop: {
         logo:             { aspect: 3,  outW: 900, outH: 300, label: '3 : 1' },
-        institution_logo: { aspect: 1,  outW: 512, outH: 512, label: '1 : 1' },
-        banner:           { aspect: 0.25, outW: 400, outH: 1600, label: '1 : 4' }
+        institution_logo: { aspect: 1,  outW: 512, outH: 512, label: '1 : 1' }
     }
 };</script>
 <script src="<?= e(asset('js/meet_setup.js')) ?>"></script>

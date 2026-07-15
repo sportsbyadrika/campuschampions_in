@@ -33,7 +33,10 @@ class CertificateTemplateController extends CrudController
             ],
             'fields' => [
                 ['name' => 'name', 'label' => 'Template Name', 'type' => 'text', 'required' => true],
-                ['name' => 'body_html', 'label' => 'Body HTML (use {{placeholders}})', 'type' => 'textarea'],
+                ['name' => 'body_html', 'label' => 'Body HTML (use {{placeholders}})', 'type' => 'textarea',
+                    'hint' => 'Placeholders: {{contestant_name}}, {{course}}, {{division}}, {{position}} (result: First/Second/Third), '
+                        . '{{event_label}} (event instance), {{event_name}} (event), {{meet_title}} (meet), {{issue_date}} (generate date). '
+                        . 'Also available: {{unique_number}}, {{house_name}}, {{category}}, {{certificate_number}}.'],
                 ['name' => 'is_default', 'label' => 'Default template', 'type' => 'select', 'options' => ['0' => 'No', '1' => 'Yes']],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => true, 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
             ],

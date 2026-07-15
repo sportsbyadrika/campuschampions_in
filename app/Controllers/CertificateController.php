@@ -58,7 +58,7 @@ class CertificateController extends Controller
              JOIN categories c ON c.id = ei.category_id
              JOIN meet_masters m ON m.id = d.meet_id
              $whereSql
-             ORDER BY ei.instance_date DESC, m.title",
+             ORDER BY ei.label ASC",
             $params
         );
 
@@ -124,10 +124,12 @@ class CertificateController extends Controller
             // Fetch contestant + result + house
             $row = Database::instance()->fetch(
                 "SELECT cm.name AS contestant_name, cm.unique_number, h.name AS house_name,
-                        r.position
+                        co.name AS course_name, dv.name AS division_name, r.position
                  FROM contestant_masters cm
                  JOIN results r ON r.contestant_id = cm.id AND r.event_instance_id = ?
                  LEFT JOIN houses h ON h.id = cm.house_id
+                 LEFT JOIN courses co ON co.id = cm.course_id
+                 LEFT JOIN divisions dv ON dv.id = cm.division_id
                  WHERE cm.id = ?",
                 [$instanceId, $cid]
             );
@@ -142,6 +144,8 @@ class CertificateController extends Controller
                 'contestant_name'   => $row['contestant_name'],
                 'unique_number'     => $row['unique_number'],
                 'house_name'        => $row['house_name'] ?? '',
+                'course'            => $row['course_name'] ?? '',
+                'division'          => $row['division_name'] ?? '',
                 'position'          => self::POS_LABELS[$row['position']] ?? ucfirst($row['position']),
                 'event_label'       => $instance['label'],
                 'event_name'        => $instance['event_name'],
