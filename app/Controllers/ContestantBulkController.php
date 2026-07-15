@@ -28,7 +28,7 @@ use App\Models\House;
 class ContestantBulkController extends Controller
 {
     private const HEADERS = [
-        'unique_number', 'name', 'dob', 'gender', 'course', 'division',
+        'unique_number', 'admission_number', 'name', 'dob', 'gender', 'course', 'division',
         'house', 'course_category_group', 'mobile', 'email', 'guardian_name', 'status', 'event_instances',
     ];
 
@@ -48,7 +48,7 @@ class ContestantBulkController extends Controller
     {
         $this->guard();
         $example = [[
-            'CC001', 'John Doe', '2008-05-14', 'M', 'Grade 10', 'A',
+            'CC001', 'ADM1001', 'John Doe', '2008-05-14', 'M', 'Grade 10', 'A',
             'Red House', 'Senior', '9000000000', 'john@example.com', 'Jane Doe', 'active',
             'Boys Junior Solo Singing - Final; 100m Sprint Heat 1',
         ]];
@@ -161,8 +161,9 @@ class ContestantBulkController extends Controller
             }
 
             $data = [
-                'unique_number' => $uniqueNo,
-                'name'          => trim((string) ($row['name'] ?? '')),
+                'unique_number'    => $uniqueNo,
+                'admission_number' => trim((string) ($row['admission_number'] ?? '')) ?: null,
+                'name'             => trim((string) ($row['name'] ?? '')),
                 'dob'           => $this->normalizeDate($row['dob'] ?? ''),
                 'gender'        => in_array(strtoupper(trim((string) ($row['gender'] ?? ''))), ['M', 'F', 'O'], true) ? strtoupper(trim((string) $row['gender'])) : null,
                 'course_id'     => $lookups['course'][strtolower(trim((string) ($row['course'] ?? '')))] ?? null,

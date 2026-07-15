@@ -29,10 +29,19 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
 <?php else: ?>
 <form id="resultForm" class="mt-6">
     <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-b border-slate-100">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="resultSearch" class="form-input pl-9" placeholder="Search unique #, name or admission #">
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-600 whitespace-nowrap">
+                <input type="checkbox" id="enteredOnly" class="rounded border-slate-300"> Show entered rows only
+            </label>
+        </div>
         <div class="overflow-x-auto">
-            <table class="data-table">
+            <table class="data-table" id="resultTable">
                 <thead><tr>
-                    <th>Unique #</th><th>Contestant</th><th>House</th>
+                    <th>Unique #</th><th>Admission #</th><th>Contestant</th><th>House</th>
                     <th class="w-40">Position</th><th class="w-28">Points</th><th>Remarks</th>
                 </tr></thead>
                 <tbody>
@@ -42,9 +51,11 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         $curPos = $cur['position'] ?? '';
                         $curPts = $cur['points'] ?? '';
                         $curRem = $cur['remarks'] ?? '';
+                        $searchKey = strtolower(trim($r['unique_number'] . ' ' . ($r['admission_number'] ?? '') . ' ' . $r['contestant_name']));
                     ?>
-                    <tr>
+                    <tr class="result-row" data-search="<?= e($searchKey) ?>">
                         <td><?= e($r['unique_number']) ?></td>
+                        <td><?= e($r['admission_number'] ?? '') ?></td>
                         <td class="font-medium"><?= e($r['contestant_name']) ?></td>
                         <td><?= e($r['house_name'] ?? '') ?></td>
                         <td>
@@ -63,11 +74,12 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         </td>
                     </tr>
                     <?php endforeach; ?>
+                    <tr id="noMatchRow" class="hidden"><td colspan="7" class="text-center py-8 text-slate-400">No matching contestants.</td></tr>
                 </tbody>
             </table>
         </div>
         <div class="flex items-center justify-between gap-2 border-t border-slate-100 px-4 py-3">
-            <p class="text-sm text-slate-500"><?= count($registrations) ?> registered contestant(s)</p>
+            <p class="text-sm text-slate-500"><span id="visibleCount"><?= count($registrations) ?></span> of <?= count($registrations) ?> registered contestant(s)</p>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Results</button>
         </div>
     </div>

@@ -6,6 +6,31 @@
     const form = document.getElementById('resultForm');
     if (!form || !RESULT) return;
 
+    // ---------- Search + "entered only" filter ----------
+    const search = document.getElementById('resultSearch');
+    const enteredOnly = document.getElementById('enteredOnly');
+    const rows = Array.from(form.querySelectorAll('.result-row'));
+    const noMatch = document.getElementById('noMatchRow');
+    const visibleCount = document.getElementById('visibleCount');
+
+    function applyFilter() {
+        const q = (search ? search.value : '').trim().toLowerCase();
+        const onlyEntered = enteredOnly && enteredOnly.checked;
+        let visible = 0;
+        rows.forEach(row => {
+            const matchesText = !q || (row.getAttribute('data-search') || '').indexOf(q) >= 0;
+            const pos = row.querySelector('.result-pos');
+            const entered = pos && pos.value !== '';
+            const show = matchesText && (!onlyEntered || entered);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        if (noMatch) noMatch.style.display = visible === 0 ? '' : 'none';
+        if (visibleCount) visibleCount.textContent = visible;
+    }
+    if (search) search.addEventListener('input', window.debounce ? window.debounce(applyFilter, 150) : applyFilter);
+    if (enteredOnly) enteredOnly.addEventListener('change', applyFilter);
+
     // Auto-fill points when a position is chosen (only if points field is empty)
     form.querySelectorAll('.result-pos').forEach(sel => {
         sel.addEventListener('change', () => {
@@ -19,6 +44,7 @@
             } else if (sel.value === '') {
                 if (pts.dataset.auto === '1') { pts.value = ''; }
             }
+            if (enteredOnly && enteredOnly.checked) applyFilter();
         });
     });
     // Mark manual edits so auto-fill stops overwriting

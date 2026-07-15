@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `course_category_groups` (
 CREATE TABLE IF NOT EXISTS `contestant_masters` (
     `id`                       INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `unique_number`            VARCHAR(50) NOT NULL,
+    `admission_number`         VARCHAR(50) DEFAULT NULL,
     `name`                     VARCHAR(150) NOT NULL,
     `dob`                      DATE DEFAULT NULL,
     `gender`                   ENUM('M','F','O') DEFAULT NULL,
@@ -151,6 +152,7 @@ CREATE TABLE IF NOT EXISTS `contestant_masters` (
     KEY `idx_contestant_house` (`house_id`),
     KEY `idx_contestant_ccg` (`course_category_group_id`),
     KEY `idx_contestant_name` (`name`),
+    KEY `idx_contestant_admission` (`admission_number`),
     CONSTRAINT `fk_contestant_campus`   FOREIGN KEY (`campus_id`)   REFERENCES `institutions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT `fk_contestant_course`   FOREIGN KEY (`course_id`)   REFERENCES `courses` (`id`)      ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT `fk_contestant_division` FOREIGN KEY (`division_id`) REFERENCES `divisions` (`id`)    ON DELETE SET NULL ON UPDATE CASCADE,

@@ -60,15 +60,18 @@ class ContestantController extends CrudController
             ],
             'columns' => [
                 ['key' => 'unique_number', 'label' => 'Unique #'],
+                ['key' => 'admission_number', 'label' => 'Admission #'],
                 ['key' => 'name', 'label' => 'Name'],
                 ['key' => 'gender', 'label' => 'Gender'],
                 ['key' => 'course_name', 'label' => 'Course'],
+                ['key' => 'division_name', 'label' => 'Division'],
                 ['key' => 'house_name', 'label' => 'House'],
                 ['key' => 'event_instances', 'label' => 'Event Instances'],
                 ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
             ],
             'fields' => [
                 ['name' => 'unique_number', 'label' => 'Unique Number', 'type' => 'text', 'required' => true],
+                ['name' => 'admission_number', 'label' => 'Admission Number', 'type' => 'text'],
                 ['name' => 'name', 'label' => 'Full Name', 'type' => 'text', 'required' => true],
                 ['name' => 'dob', 'label' => 'Date of Birth', 'type' => 'date'],
                 ['name' => 'gender', 'label' => 'Gender', 'type' => 'select', 'options' => ['' => '— Select —', 'M' => 'Male', 'F' => 'Female', 'O' => 'Other']],
@@ -85,12 +88,13 @@ class ContestantController extends CrudController
                  'options' => $this->instanceOptions(),
                  'hint' => 'Pick an event instance and click Add. Added events register this contestant; remove with ✕.'],
             ],
-            'search'  => ['unique_number', 'name', 'mobile', 'email'],
+            'search'  => ['unique_number', 'admission_number', 'name', 'mobile', 'email'],
             'filters' => [
-                'status'    => ['label' => 'Status', 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
-                'gender'    => ['label' => 'Gender', 'options' => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other']],
-                'course_id' => ['label' => 'Course', 'options' => array_filter($courses, fn($k) => $k !== '', ARRAY_FILTER_USE_KEY)],
-                'house_id'  => ['label' => 'House', 'options' => array_filter($houses, fn($k) => $k !== '', ARRAY_FILTER_USE_KEY)],
+                'status'      => ['label' => 'Status', 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
+                'gender'      => ['label' => 'Gender', 'options' => ['M' => 'Male', 'F' => 'Female', 'O' => 'Other']],
+                'course_id'   => ['label' => 'Course', 'options' => array_filter($courses, fn($k) => $k !== '', ARRAY_FILTER_USE_KEY)],
+                'division_id' => ['label' => 'Division', 'options' => array_filter($divisions, fn($k) => $k !== '', ARRAY_FILTER_USE_KEY)],
+                'house_id'    => ['label' => 'House', 'options' => array_filter($houses, fn($k) => $k !== '', ARRAY_FILTER_USE_KEY)],
             ],
         ];
     }
@@ -256,8 +260,9 @@ class ContestantController extends CrudController
     {
         $intOrNull = fn($v) => ($v === '' || $v === null) ? null : (int) $v;
         return [
-            'unique_number' => Request::input('unique_number'),
-            'name'          => Request::input('name'),
+            'unique_number'   => Request::input('unique_number'),
+            'admission_number'=> Request::input('admission_number') ?: null,
+            'name'            => Request::input('name'),
             'dob'           => Request::input('dob') ?: null,
             'gender'        => Request::input('gender') ?: null,
             'course_id'     => $intOrNull(Request::input('course_id')),
@@ -277,8 +282,9 @@ class ContestantController extends CrudController
             ? "unique:contestant_masters,unique_number,{$id}"
             : 'unique:contestant_masters,unique_number';
         return [
-            'unique_number' => "required|max:50|{$unique}",
-            'name'          => 'required|max:150',
+            'unique_number'    => "required|max:50|{$unique}",
+            'admission_number' => 'max:50',
+            'name'             => 'required|max:150',
             'gender'        => 'in:M,F,O',
             'email'         => 'email|max:150',
             'mobile'        => 'max:30',
