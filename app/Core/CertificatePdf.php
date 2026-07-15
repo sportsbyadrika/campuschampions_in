@@ -24,9 +24,44 @@ class CertificatePdf
     }
 
     /**
-     * Generate a PDF from HTML and save it. Returns web-relative path.
+     * Compose the full certificate overlay from a template's layout config and
+     * the placeholder data: a centred content box within the configured margins,
+     * plus the certificate number (top-left) and date (bottom-left) placed at
+     * their configured positions. All measurements are in millimetres.
      */
-    public static function generate(string $html, string $filename): string
+    public static function compose(array $tpl, array $data): string
+    {
+        $orientation = ($tpl['orientation'] ?? 'portrait') === 'landscape' ? 'landscape' : 'portrait';
+        [$pageW, $pageH] = $orientation === 'landscape' ? [297, 210] : [210, 297];
+
+        $mt = (int) ($tpl['margin_top'] ?? 20);
+        $mr = (int) ($tpl['margin_right'] ?? 20);
+        $mb = (int) ($tpl['margin_bottom'] ?? 20);
+        $ml = (int) ($tpl['margin_left'] ?? 20);
+        $cw = max(10, $pageW - $ml - $mr);
+        $ch = max(10, $pageH - $mt - $mb);
+
+        $num  = htmlspecialchars((string) ($data['certificate_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $date = htmlspecialchars((string) ($data['issue_date'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $nt = (int) ($tpl['number_top'] ?? 12); $nl = (int) ($tpl['number_left'] ?? 15);
+        $dt = (int) ($tpl['date_top'] ?? 262);  $dl = (int) ($tpl['date_left'] ?? 20);
+
+        $body = self::render((string) ($tpl['body_html'] ?? ''), $data);
+
+        $out = '';
+        if ($num !== '') {
+            $out .= '<div style="position:absolute; top:' . $nt . 'mm; left:' . $nl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:11px; color:#333;">' . $num . '</div>';
+        }
+        if ($date !== '') {
+            $out .= '<div style="position:absolute; top:' . $dt . 'mm; left:' . $dl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:11px; color:#333;">' . $date . '</div>';
+        }
+        $out .= '<div style="position:absolute; top:' . $mt . 'mm; left:' . $ml . 'mm; width:' . $cw . 'mm; height:' . $ch . 'mm; display:table;">'
+              . '<div style="display:table-cell; vertical-align:middle; text-align:center;">' . $body . '</div></div>';
+        return $out;
+    }
+
+    /** Build a configured Dompdf instance for a certificate overlay. */
+    private static function dompdf(string $html, string $orientation): Dompdf
     {
         $options = new Options();
         $options->set('isRemoteEnabled', false);   // no external fetches (security)
@@ -36,8 +71,17 @@ class CertificatePdf
         $dompdf = new Dompdf($options);
         $wrapped = '<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page{margin:0}body{margin:0}</style></head><body>' . $html . '</body></html>';
         $dompdf->loadHtml($wrapped, 'UTF-8');
-        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->setPaper('A4', $orientation === 'landscape' ? 'landscape' : 'portrait');
         $dompdf->render();
+        return $dompdf;
+    }
+
+    /**
+     * Generate a PDF from overlay HTML and save it. Returns web-relative path.
+     */
+    public static function generate(string $html, string $filename, string $orientation = 'portrait'): string
+    {
+        $dompdf = self::dompdf($html, $orientation);
 
         $dir = UPLOAD_PATH . '/certificates';
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
@@ -47,5 +91,12 @@ class CertificatePdf
         file_put_contents($dir . '/' . $safe, $dompdf->output());
 
         return 'uploads/certificates/' . $safe;
+    }
+
+    /** Stream a certificate overlay PDF inline (used for template preview). */
+    public static function stream(string $html, string $filename, string $orientation = 'portrait'): void
+    {
+        $dompdf = self::dompdf($html, $orientation);
+        $dompdf->stream($filename . '.pdf', ['Attachment' => false]);
     }
 }

@@ -134,7 +134,14 @@ $router->get('/standings/live-data/{meetId}', 'StandingsController@liveData');
 // ---------------------------------------------------------------------
 // Certificates
 // ---------------------------------------------------------------------
-$crud('certificate-templates', 'CertificateTemplateController');
+// Certificate templates — full-page add/edit (not the generic CRUD modal)
+$router->get('/certificate-templates',              'CertificateTemplateController@index',    ['auth']);
+$router->get('/certificate-templates/new',          'CertificateTemplateController@create',   ['auth']);
+$router->post('/certificate-templates',             'CertificateTemplateController@store',    ['auth']);
+$router->post('/certificate-templates/preview',     'CertificateTemplateController@preview',  ['auth']);
+$router->get('/certificate-templates/{id}/edit',    'CertificateTemplateController@editPage', ['auth']);
+$router->post('/certificate-templates/{id}',        'CertificateTemplateController@update',   ['auth']);
+$router->post('/certificate-templates/{id}/delete', 'CertificateTemplateController@destroy',  ['auth']);
 
 $router->get('/certificates',                        'CertificateController@index',        ['auth']);
 $router->get('/certificates/download/{certId}',      'CertificateController@download',      ['auth']);

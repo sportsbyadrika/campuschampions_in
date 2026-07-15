@@ -117,12 +117,24 @@ class CertificateController extends Controller
 
         $certModel = new Certificate();
         $generated = 0;
-        $issueDate = date('Y-m-d');
+        $db = Database::instance();
+        $meetId = (int) $instance['meet_id'];
+
+        // Certificate date: chosen on the form (defaults to today), shown formatted.
+        $rawDate   = (string) (Request::input('issue_date') ?: date('Y-m-d'));
+        $ts        = strtotime($rawDate) ?: time();
+        $issueDate = date('Y-m-d', $ts);
+        $displayDate = date('d M Y', $ts);
+
+        // Per-meet running sequence, seeded from the template's configured next number.
+        $seq = $db->scalar("SELECT cert_next_seq FROM meet_masters WHERE id = ?", [$meetId]);
+        $seq = $seq !== null ? (int) $seq : (int) ($template['number_next'] ?? 1);
+        $orientation = $template['orientation'] ?? 'portrait';
 
         foreach ($contestantIds as $cid) {
             $cid = (int) $cid;
-            // Fetch contestant + result + house
-            $row = Database::instance()->fetch(
+            // Fetch contestant + result + house + course/division
+            $row = $db->fetch(
                 "SELECT cm.name AS contestant_name, cm.unique_number, h.name AS house_name,
                         co.name AS course_name, dv.name AS division_name, r.position
                  FROM contestant_masters cm
@@ -138,9 +150,14 @@ class CertificateController extends Controller
             }
 
             $existing = $certModel->existsFor($instanceId, $cid);
-            $number = $existing['certificate_number'] ?? $certModel->nextNumber();
+            if ($existing) {
+                $number = $existing['certificate_number']; // keep the original number
+            } else {
+                $number = (string) ($template['number_prefix'] ?? '') . $seq . (string) ($template['number_suffix'] ?? '');
+                $seq++;
+            }
 
-            $html = CertificatePdf::render($template['body_html'], [
+            $html = CertificatePdf::compose($template, [
                 'contestant_name'   => $row['contestant_name'],
                 'unique_number'     => $row['unique_number'],
                 'house_name'        => $row['house_name'] ?? '',
@@ -151,12 +168,12 @@ class CertificateController extends Controller
                 'event_name'        => $instance['event_name'],
                 'category'          => $instance['category_name'],
                 'meet_title'        => $instance['meet_title'],
-                'issue_date'        => $issueDate,
+                'issue_date'        => $displayDate,
                 'certificate_number'=> $number,
             ]);
 
             try {
-                $path = CertificatePdf::generate($html, 'cert_' . $instanceId . '_' . $cid . '_' . $number);
+                $path = CertificatePdf::generate($html, 'cert_' . $instanceId . '_' . $cid . '_' . $number, $orientation);
             } catch (\RuntimeException $e) {
                 $this->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
@@ -181,6 +198,9 @@ class CertificateController extends Controller
             }
             $generated++;
         }
+
+        // Persist the advanced per-meet sequence.
+        $db->query("UPDATE meet_masters SET cert_next_seq = ? WHERE id = ?", [$seq, $meetId]);
 
         Audit::log('generate_certificates', 'certificates', $instanceId, null, ['count' => $generated]);
         $this->json(['success' => true, 'message' => "Generated {$generated} certificate(s)."]);
