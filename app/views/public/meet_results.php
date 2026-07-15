@@ -76,8 +76,9 @@ $cell = function (array $list): string {
     .pw-table { width: 100%; border-collapse: collapse; color: #e5edf7; }
     .pw-table th, .pw-table td { text-align: left; padding: .85rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: top; }
     .pw-table thead th { position: sticky; top: 0; background: rgba(15,23,42,.95); color: #93a4bd; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .pw-table tbody tr:nth-child(even) { background: rgba(255,255,255,.04); }
     .pw-evtcell { border-left: 4px solid #38bdf8; }
-    .pw-evt { display: block; font-weight: 800; font-size: 1rem; color: #38bdf8; letter-spacing: .2px; }
+    .pw-evt { display: block; font-weight: 700; font-size: .82rem; color: #38bdf8; letter-spacing: .2px; }
     .pw-sub { display: block; color: #93a4bd; font-weight: 400; font-size: .72rem; margin-top: .2rem; }
     .pw-win { margin-bottom: .5rem; }
     .pw-win:last-child { margin-bottom: 0; }

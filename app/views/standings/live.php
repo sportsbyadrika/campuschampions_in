@@ -98,9 +98,10 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         .track { will-change: transform; }
         .wtable th { background: rgba(15,23,42,.92); }
         .wtable td { vertical-align: top; }
+        .wtable tbody tr:nth-child(even) { background: rgba(255,255,255,.04); }   /* zebra striping */
         .wtable td.evtcell { border-left: .35vw solid var(--evt); }
-        .wtable .evt { font-weight: 800; font-size: 2.1vh; color: var(--evt); letter-spacing: .3px; }
-        .wtable .evt small { display: block; color: var(--muted); font-weight: 400; font-size: 1.3vh; margin-top: .3vh; }
+        .wtable .evt { display: block; font-weight: 700; font-size: 1.55vh; color: var(--evt); letter-spacing: .2px; }
+        .wtable .evsub { display: block; color: var(--muted); font-weight: 400; font-size: 1.3vh; margin-top: .35vh; }
         .win { margin-bottom: .7vh; }
         .win:last-child { margin-bottom: 0; }
         .win .wn { font-weight: 700; font-size: 1.65vh; color: #fff; }
@@ -143,7 +144,7 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
                 <div class="body" id="housePanel"><div class="loading">Loading…</div></div>
             </div>
             <div class="panel">
-                <div class="head"><span class="dot">📚</span> House × Category — Points</div>
+                <div class="head"><span class="dot">📚</span> House × Category Group — Points</div>
                 <div class="body">
                     <div class="scroller" id="catScroller"><div class="track" id="catTrack"><div class="loading">Loading…</div></div></div>
                 </div>
@@ -224,7 +225,7 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         if (!events.length) return '<div class="loading">No prize winners yet.</div>';
         var rows = events.map(function (ev) {
             return '<tr>'
-                + '<td class="evtcell"><span class="evt">' + esc(ev.label) + '</span><small>' + esc(ev.sub) + '</small></td>'
+                + '<td class="evtcell"><span class="evt">' + esc(ev.label) + '</span><span class="evsub">' + esc(ev.sub) + '</span></td>'
                 + '<td>' + cell(ev.first) + '</td>'
                 + '<td>' + cell(ev.second) + '</td>'
                 + '<td>' + cell(ev.third) + '</td>'

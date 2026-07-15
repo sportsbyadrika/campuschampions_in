@@ -171,7 +171,7 @@ class StandingsController extends Controller
             if (!isset($byInst[$key])) {
                 $byInst[$key] = [
                     'label'  => $r['instance_label'],
-                    'sub'    => $r['discipline_name'] . ' · ' . $r['event_name'] . ' · ' . $r['category_name'],
+                    'sub'    => $r['discipline_name'] . ' · ' . $r['event_name'],
                     'first'  => [], 'second' => [], 'third' => [],
                 ];
             }
@@ -193,7 +193,7 @@ class StandingsController extends Controller
                 'points' => (float) $h['total_points'], 'golds' => (int) $h['golds'],
                 'silvers' => (int) $h['silvers'], 'bronzes' => (int) $h['bronzes'],
             ], $st->houses($meetId)),
-            'categoryPivot' => $this->categoryPivot($st->houseCategoryPoints($meetId)),
+            'categoryPivot' => $this->categoryPivot($st->houseCategoryGroupPoints($meetId)),
             'events'        => array_values($byInst),
         ];
     }

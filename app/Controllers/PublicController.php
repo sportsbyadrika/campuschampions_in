@@ -68,7 +68,7 @@ class PublicController extends Controller
                 if (!isset($byInst[$key])) {
                     $byInst[$key] = [
                         'label' => $r['instance_label'],
-                        'sub'   => $r['discipline_name'] . ' · ' . $r['event_name'] . ' · ' . $r['category_name'],
+                        'sub'   => $r['discipline_name'] . ' · ' . $r['event_name'],
                         'first' => [], 'second' => [], 'third' => [],
                     ];
                 }
