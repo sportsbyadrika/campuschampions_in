@@ -17,6 +17,33 @@ class CertificateTemplateController extends CrudController
         return new CertificateTemplate();
     }
 
+    /** Available certificate placeholders, rendered as labelled code chips. */
+    private static function placeholderHint(): string
+    {
+        $items = [
+            '{{contestant_name}}' => 'contestant',
+            '{{course}}'          => 'course',
+            '{{division}}'        => 'division',
+            '{{position}}'        => 'result',
+            '{{event_label}}'     => 'event instance',
+            '{{event_name}}'      => 'event',
+            '{{meet_title}}'      => 'meet',
+            '{{issue_date}}'      => 'generate date',
+            '{{unique_number}}'   => 'unique #',
+            '{{house_name}}'      => 'house',
+            '{{category}}'        => 'category',
+            '{{certificate_number}}' => 'certificate #',
+        ];
+        $chips = '';
+        foreach ($items as $token => $meaning) {
+            $chips .= '<span class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 mr-1 mb-1">'
+                . '<code class="text-primary">' . e($token) . '</code>'
+                . '<span class="text-slate-400">' . e($meaning) . '</span></span>';
+        }
+        return '<span class="font-medium text-slate-600">Placeholders you can use:</span><br>'
+            . '<span class="mt-1 flex flex-wrap">' . $chips . '</span>';
+    }
+
     protected function config(): array
     {
         return [
@@ -34,9 +61,7 @@ class CertificateTemplateController extends CrudController
             'fields' => [
                 ['name' => 'name', 'label' => 'Template Name', 'type' => 'text', 'required' => true],
                 ['name' => 'body_html', 'label' => 'Body HTML (use {{placeholders}})', 'type' => 'textarea',
-                    'hint' => 'Placeholders: {{contestant_name}}, {{course}}, {{division}}, {{position}} (result: First/Second/Third), '
-                        . '{{event_label}} (event instance), {{event_name}} (event), {{meet_title}} (meet), {{issue_date}} (generate date). '
-                        . 'Also available: {{unique_number}}, {{house_name}}, {{category}}, {{certificate_number}}.'],
+                    'hint' => self::placeholderHint()],
                 ['name' => 'is_default', 'label' => 'Default template', 'type' => 'select', 'options' => ['0' => 'No', '1' => 'Yes']],
                 ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'required' => true, 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
             ],

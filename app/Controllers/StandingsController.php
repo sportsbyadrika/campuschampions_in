@@ -95,7 +95,14 @@ class StandingsController extends Controller
             $adm = trim((string) $r['admission_number']);
             $key = $adm !== '' ? 'a:' . $adm : 'c:' . (int) $r['contestant_id'];
             if (!isset($groups[$gid]['people'][$key])) {
-                $groups[$gid]['people'][$key] = ['admission' => $adm ?: '—', 'name' => $r['name'], 'points' => 0.0];
+                $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
+                $groups[$gid]['people'][$key] = [
+                    'admission' => $adm ?: '—',
+                    'name'      => $r['name'],
+                    'house'     => $r['house_name'] ?? '',
+                    'cls'       => $cls,
+                    'points'    => 0.0,
+                ];
             }
             $groups[$gid]['people'][$key]['points'] += (float) $r['points'];
         }

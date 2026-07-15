@@ -151,15 +151,19 @@ class Standing
         return $this->db->fetchAll(
             "SELECT g.id AS group_id, g.name AS group_name,
                     cm.id AS contestant_id, cm.admission_number, cm.name,
+                    h.name AS house_name, co.name AS course_name, dv.name AS division_name,
                     COALESCE(SUM(r.points), 0) AS points
              FROM results r
              JOIN contestant_masters cm ON cm.id = r.contestant_id
              JOIN course_category_groups g ON g.id = cm.course_category_group_id
+             LEFT JOIN houses h ON h.id = cm.house_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
              JOIN event_instances ei ON ei.id = r.event_instance_id
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id
              WHERE d.meet_id = ?" . $publishSql . "
-             GROUP BY g.id, g.name, cm.id, cm.admission_number, cm.name
+             GROUP BY g.id, g.name, cm.id, cm.admission_number, cm.name, h.name, co.name, dv.name
              ORDER BY g.name ASC, cm.name ASC",
             [$meetId]
         );

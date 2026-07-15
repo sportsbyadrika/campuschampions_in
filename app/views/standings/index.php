@@ -169,15 +169,17 @@ $winnerCell = function (array $list) use ($classOf) {
             <?php else: foreach ($topScorers as $g): ?>
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-primary mb-1.5"><?= e($g['group']) ?></div>
-                    <ol class="space-y-1">
-                        <?php foreach ($g['scorers'] as $i => $s): ?>
-                            <li class="flex items-center gap-2 text-sm">
-                                <span class="w-5 shrink-0 text-center font-semibold text-slate-400"><?= $i + 1 ?></span>
-                                <span class="flex-1 min-w-0 truncate">
+                    <ol class="space-y-1.5">
+                        <?php foreach ($g['scorers'] as $i => $s):
+                            $meta = array_filter([$s['admission'] !== '—' ? $s['admission'] : '', $s['house'] ?? '', $s['cls'] ?? '']);
+                        ?>
+                            <li class="flex items-start gap-2 text-sm">
+                                <span class="w-5 shrink-0 text-center font-semibold text-slate-400 leading-6"><?= $i + 1 ?></span>
+                                <span class="flex-1 min-w-0">
                                     <span class="font-medium text-slate-900"><?= e($s['name']) ?></span>
-                                    <span class="text-xs text-slate-400 ml-1"><?= e($s['admission']) ?></span>
+                                    <?php if ($meta): ?><span class="block text-xs text-slate-500 truncate"><?= e(implode(' · ', $meta)) ?></span><?php endif; ?>
                                 </span>
-                                <span class="shrink-0 font-semibold text-slate-900"><?= e($num($s['points'])) ?> pts</span>
+                                <span class="shrink-0 font-semibold text-slate-900 leading-6"><?= e($num($s['points'])) ?> pts</span>
                             </li>
                         <?php endforeach; ?>
                     </ol>
