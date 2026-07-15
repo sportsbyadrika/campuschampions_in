@@ -8,6 +8,10 @@ $icons = [
     'Meets' => 'fa-calendar-days',
     'Courses' => 'fa-book',
     'Houses' => 'fa-flag',
+    'Total Event Instances'   => 'fa-list-check',
+    'Total Results Entered'   => 'fa-ranking-star',
+    'Total Results Published' => 'fa-bullhorn',
+    'Certificates Generated'  => 'fa-award',
 ];
 ?>
 <div class="flex items-center justify-between">
