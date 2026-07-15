@@ -149,7 +149,8 @@ class CertificateTemplateController extends Controller
             'name' => '', 'body_html' => CertificateTemplate::sampleBody(),
             'orientation' => 'portrait',
             'margin_top' => 95, 'margin_right' => 22, 'margin_bottom' => 80, 'margin_left' => 22,
-            'number_top' => 12, 'number_left' => 15, 'date_top' => 262, 'date_left' => 20,
+            'number_top' => 12, 'number_left' => 15, 'number_font_size' => 11, 'number_font_color' => '#333333',
+            'date_top' => 262, 'date_left' => 20, 'date_font_size' => 11, 'date_font_color' => '#333333',
             'number_prefix' => '', 'number_suffix' => '', 'number_next' => 1,
             'is_default' => 0, 'status' => 'active',
         ];
@@ -169,14 +170,25 @@ class CertificateTemplateController extends Controller
             'margin_left'   => $int('margin_left', 22),
             'number_top'    => $int('number_top', 12),
             'number_left'   => $int('number_left', 15),
+            'number_font_size'  => $int('number_font_size', 11, 6, 72),
+            'number_font_color' => $this->hex(Request::input('number_font_color', '#333333')),
             'date_top'      => $int('date_top', 262),
             'date_left'     => $int('date_left', 20),
+            'date_font_size'    => $int('date_font_size', 11, 6, 72),
+            'date_font_color'   => $this->hex(Request::input('date_font_color', '#333333')),
             'number_prefix' => substr((string) Request::input('number_prefix', ''), 0, 30),
             'number_suffix' => substr((string) Request::input('number_suffix', ''), 0, 30),
             'number_next'   => max(1, (int) Request::input('number_next', 1)),
             'is_default'    => Request::input('is_default') ? 1 : 0,
             'status'        => Request::input('status') === 'inactive' ? 'inactive' : 'active',
         ];
+    }
+
+    /** Sanitise a hex colour value. */
+    private function hex(mixed $value): string
+    {
+        $v = trim((string) $value);
+        return preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $v) ? $v : '#333333';
     }
 
     private function validate(array $data): ?string

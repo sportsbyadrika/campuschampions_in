@@ -97,6 +97,14 @@ $placeholders = [
                     <label class="form-label">Position Left (mm)</label>
                     <input type="number" min="0" max="400" name="number_left" value="<?= $num('number_left', 15) ?>" class="form-input">
                 </div>
+                <div>
+                    <label class="form-label">Font Size (px)</label>
+                    <input type="number" min="6" max="72" name="number_font_size" value="<?= $num('number_font_size', 11) ?>" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Font Colour</label>
+                    <input type="color" name="number_font_color" value="<?= $v('number_font_color', '#333333') ?>" class="h-9 w-full rounded border border-slate-300 p-0.5">
+                </div>
             </div>
         </div>
 
@@ -111,6 +119,14 @@ $placeholders = [
                 <div>
                     <label class="form-label">Position Left (mm)</label>
                     <input type="number" min="0" max="400" name="date_left" value="<?= $num('date_left', 20) ?>" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Font Size (px)</label>
+                    <input type="number" min="6" max="72" name="date_font_size" value="<?= $num('date_font_size', 11) ?>" class="form-input">
+                </div>
+                <div>
+                    <label class="form-label">Font Colour</label>
+                    <input type="color" name="date_font_color" value="<?= $v('date_font_color', '#333333') ?>" class="h-9 w-full rounded border border-slate-300 p-0.5">
                 </div>
             </div>
         </div>

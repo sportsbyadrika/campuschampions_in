@@ -45,19 +45,28 @@ class CertificatePdf
         $date = htmlspecialchars((string) ($data['issue_date'] ?? ''), ENT_QUOTES, 'UTF-8');
         $nt = (int) ($tpl['number_top'] ?? 12); $nl = (int) ($tpl['number_left'] ?? 15);
         $dt = (int) ($tpl['date_top'] ?? 262);  $dl = (int) ($tpl['date_left'] ?? 20);
+        $nfs = (int) ($tpl['number_font_size'] ?? 11); $nfc = self::color($tpl['number_font_color'] ?? '#333333');
+        $dfs = (int) ($tpl['date_font_size'] ?? 11);   $dfc = self::color($tpl['date_font_color'] ?? '#333333');
 
         $body = self::render((string) ($tpl['body_html'] ?? ''), $data);
 
         $out = '';
         if ($num !== '') {
-            $out .= '<div style="position:absolute; top:' . $nt . 'mm; left:' . $nl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:11px; color:#333;">' . $num . '</div>';
+            $out .= '<div style="position:absolute; top:' . $nt . 'mm; left:' . $nl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:' . $nfs . 'px; color:' . $nfc . ';">' . $num . '</div>';
         }
         if ($date !== '') {
-            $out .= '<div style="position:absolute; top:' . $dt . 'mm; left:' . $dl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:11px; color:#333;">' . $date . '</div>';
+            $out .= '<div style="position:absolute; top:' . $dt . 'mm; left:' . $dl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:' . $dfs . 'px; color:' . $dfc . ';">' . $date . '</div>';
         }
         $out .= '<div style="position:absolute; top:' . $mt . 'mm; left:' . $ml . 'mm; width:' . $cw . 'mm; height:' . $ch . 'mm; display:table;">'
               . '<div style="display:table-cell; vertical-align:middle; text-align:center;">' . $body . '</div></div>';
         return $out;
+    }
+
+    /** Validate a hex colour (#RGB or #RRGGBB) for safe inline-style use. */
+    private static function color(mixed $value): string
+    {
+        $v = trim((string) $value);
+        return preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $v) ? $v : '#333333';
     }
 
     /** Build a configured Dompdf instance for a certificate overlay. */
