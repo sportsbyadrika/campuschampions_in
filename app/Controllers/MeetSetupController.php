@@ -269,37 +269,37 @@ class MeetSetupController extends Controller
             'banner'           => 'banner_path',
             'institution_logo' => 'institution_logo_path',
         ];
-        foreach ($images as $field => $column) {
-            $file = Request::file($field);
-            if ($file && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                try {
+        try {
+            foreach ($images as $field => $column) {
+                $file = Request::file($field);
+                if ($file && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
                     $data[$column] = \App\Core\FileUpload::image($file, 'meets');
                     \App\Core\FileUpload::delete($meet[$column] ?? null);
-                } catch (\RuntimeException $e) {
-                    $this->json(['success' => false, 'errors' => [$field => $e->getMessage()], 'message' => $e->getMessage()], 422);
+                } elseif (Request::input('remove_' . $field)) {
+                    \App\Core\FileUpload::delete($meet[$column] ?? null);
+                    $data[$column] = null;
                 }
-            } elseif (Request::input('remove_' . $field)) {
-                \App\Core\FileUpload::delete($meet[$column] ?? null);
-                $data[$column] = null;
             }
-        }
 
-        try {
             (new MeetMaster())->update($meetId, $data);
+            Audit::log('update', 'meet_masters', $meetId, null, $data);
         } catch (\PDOException $e) {
-            // Most commonly the live-screen columns are missing because the
-            // database migration has not been applied yet. Surface a clear,
-            // actionable message instead of a generic 500.
-            $missingColumn = stripos($e->getMessage(), 'column') !== false;
+            // Database error. Note: PDOException extends RuntimeException, so it
+            // must be caught BEFORE the image-validation RuntimeException below.
+            error_log('saveLiveSettings DB error: ' . $e->getMessage());
+            $msg = $e->getMessage();
+            if (stripos($msg, 'column') !== false) {
+                $msg .= ' — the live-screen columns may be missing; apply migration 002_add_meet_live_settings.sql.';
+            }
+            $this->json(['success' => false, 'message' => 'Could not save live-screen settings: ' . $msg], 500);
+        } catch (\RuntimeException $e) {
+            // Image validation failures (type/size/dimensions/upload directory).
+            $this->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            // Anything else (filesystem warning promoted to ErrorException, …).
             error_log('saveLiveSettings failed: ' . $e->getMessage());
-            $this->json([
-                'success' => false,
-                'message' => $missingColumn
-                    ? 'Live-screen settings could not be saved: the database is missing the live-screen columns. Please apply migration 002_add_meet_live_settings.sql.'
-                    : 'Live-screen settings could not be saved due to a database error.',
-            ], 500);
+            $this->json(['success' => false, 'message' => 'Could not save live-screen settings: ' . $e->getMessage()], 500);
         }
-        Audit::log('update', 'meet_masters', $meetId, null, $data);
 
         $pathFor = fn(string $column) => !array_key_exists($column, $data)
             ? (!empty($meet[$column]) ? asset($meet[$column]) : '')   // unchanged

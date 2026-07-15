@@ -7,9 +7,12 @@ $cell = function (array $list): string {
     $out = '';
     foreach ($list as $w) {
         $out .= '<div class="pw-win"><div class="pw-name">' . e($w['name']) . '</div>';
-        $meta = trim(($w['unique'] ?? '') . (($w['unique'] ?? '') && ($w['meta'] ?? '') ? ' · ' : '') . ($w['meta'] ?? ''));
-        if ($meta !== '') {
-            $out .= '<div class="pw-meta">' . e($meta) . '</div>';
+        $parts = [];
+        if (!empty($w['unique'])) { $parts[] = '<span class="pw-uid">' . e($w['unique']) . '</span>'; }
+        if (!empty($w['house'])) { $parts[] = '<span class="pw-house">' . e($w['house']) . '</span>'; }
+        if (!empty($w['cls']))   { $parts[] = '<span class="pw-cls">' . e($w['cls']) . '</span>'; }
+        if ($parts) {
+            $out .= '<div class="pw-meta">' . implode('<span class="pw-sep"> · </span>', $parts) . '</div>';
         }
         $out .= '</div>';
     }
@@ -84,5 +87,9 @@ $cell = function (array $list): string {
     .pw-win:last-child { margin-bottom: 0; }
     .pw-name { font-weight: 700; font-size: .9rem; color: #fff; }
     .pw-meta { font-size: .72rem; color: #93a4bd; }
+    .pw-uid { color: #93a4bd; }
+    .pw-house { color: #fbbf24; font-weight: 600; }   /* house colour */
+    .pw-cls { color: #34d399; font-weight: 600; }     /* course/division colour */
+    .pw-sep { color: rgba(255,255,255,.3); }
     .pw-dash { color: rgba(255,255,255,.25); }
 </style>

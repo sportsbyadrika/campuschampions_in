@@ -31,10 +31,13 @@
     modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
     function layoutStage(cfg) {
-        // Fit the stage width to the available modal width, height from aspect.
-        var avail = Math.min(560, (modal.querySelector('.modal-panel').clientWidth || 560) - 48);
-        var w = Math.max(240, avail);
+        // Fit within both the available modal width and a sensible max height
+        // (so a tall/portrait aspect does not overflow the viewport).
+        var maxW = Math.min(560, (modal.querySelector('.modal-panel').clientWidth || 560) - 48);
+        var maxH = Math.max(220, Math.round((window.innerHeight || 700) * 0.55));
+        var w = Math.max(200, maxW);
         var h = Math.round(w / cfg.aspect);
+        if (h > maxH) { h = maxH; w = Math.round(h * cfg.aspect); }
         stage.style.width = w + 'px';
         stage.style.height = h + 'px';
         return { w: w, h: h };

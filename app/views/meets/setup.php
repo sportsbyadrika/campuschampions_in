@@ -81,7 +81,7 @@ $liveImg = function (string $field, string $title, string $hint, string $ratioLa
         <?php
         $liveImg('logo', 'Meet Logo', 'Shown centered in the top banner', '3 : 1 (wide)', $meet['logo_path'] ?? null);
         $liveImg('institution_logo', 'Institution Logo', 'Shown on the left of the banner', '1 : 1 (square)', $meet['institution_logo_path'] ?? null);
-        $liveImg('banner', 'Banner Image', 'Optional wide banner for the meet', '4 : 1 (wide)', $meet['banner_path'] ?? null);
+        $liveImg('banner', 'Banner Image', 'Optional tall banner for the meet', '1 : 4 (tall)', $meet['banner_path'] ?? null);
         ?>
     </div>
 
@@ -273,7 +273,7 @@ $modal('instances', 'Event Instance',
     crop: {
         logo:             { aspect: 3,  outW: 900, outH: 300, label: '3 : 1' },
         institution_logo: { aspect: 1,  outW: 512, outH: 512, label: '1 : 1' },
-        banner:           { aspect: 4,  outW: 1600, outH: 400, label: '4 : 1' }
+        banner:           { aspect: 0.25, outW: 400, outH: 1600, label: '1 : 4' }
     }
 };</script>
 <script src="<?= e(asset('js/meet_setup.js')) ?>"></script>

@@ -73,12 +73,12 @@ class PublicController extends Controller
                     ];
                 }
                 $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
-                $meta = array_filter([$r['house_name'] ?? '', $cls]);
                 if (isset($byInst[$key][$r['position']])) {
                     $byInst[$key][$r['position']][] = [
-                        'name' => $r['contestant_name'],
+                        'name'   => $r['contestant_name'],
                         'unique' => $r['unique_number'],
-                        'meta' => implode(' · ', $meta),
+                        'house'  => $r['house_name'] ?? '',
+                        'cls'    => $cls,
                     ];
                 }
             }

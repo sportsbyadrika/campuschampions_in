@@ -18,6 +18,8 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
             --ink:#e5edf7; --muted:#93a4bd; --line:rgba(255,255,255,.12);
             --pts:#fbbf24;      /* house total points accent */
             --evt:#38bdf8;      /* event instance emphasis */
+            --wh:#fbbf24;       /* winner house colour */
+            --wc:#34d399;       /* winner course/division colour */
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; }
@@ -68,16 +70,18 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         .panel > .body { padding: 1vh 1.2vw; overflow: hidden; flex: 1; min-height: 0; }
         .col > .panel { flex: 1; }              /* left column: two panels at 50/50 height */
 
-        /* ---- House standings (enlarged) ---- */
-        .house { display: flex; align-items: center; gap: .8vw; margin-bottom: 1.7vh; }
-        .house .rank { width: 2.6vh; text-align: center; font-weight: 800; color: var(--muted); font-size: 2.1vh; }
-        .house .nm { width: 8vw; display: flex; align-items: center; gap: .5vw; font-weight: 700; font-size: 2.2vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .house .swatch { width: 1.8vh; height: 1.8vh; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); flex: none; }
-        .house .barwrap { flex: 1; height: 1.8vh; background: rgba(255,255,255,.09); border-radius: 999px; overflow: hidden; }
-        .house .bar { height: 100%; border-radius: 999px; transition: width .6s ease; }
-        .house .medals { font-size: 1.9vh; color: var(--muted); white-space: nowrap; display: flex; gap: .7vw; }
-        .house .medals .mc { display: inline-flex; align-items: center; gap: .2vw; }
-        .house .pts { width: 6vw; text-align: right; font-weight: 800; font-size: 2.4vh; color: var(--pts); }
+        /* ---- House standings (enlarged, headed table) ---- */
+        .house-table thead th { text-transform: none; font-size: 1.5vh; font-weight: 700; color: var(--muted); }
+        .house-table th, .house-table td { padding: .75vh .6vw; }
+        .house-table .rk { width: 3vh; text-align: center; font-weight: 800; color: var(--muted); font-size: 1.9vh; }
+        .house-table td.hn { font-weight: 700; font-size: 2.1vh; color: #fff; white-space: nowrap; }
+        .house-table td.hn .swatch { display: inline-block; width: 1.7vh; height: 1.7vh; border-radius: 50%; margin-right: .5vw; vertical-align: middle; border: 1px solid rgba(255,255,255,.3); }
+        .house-table .barcell { width: 26%; }
+        .house-table .barwrap { height: 1.6vh; background: rgba(255,255,255,.09); border-radius: 999px; overflow: hidden; }
+        .house-table .bar { height: 100%; border-radius: 999px; transition: width .6s ease; }
+        .house-table th.medal-h { text-align: center; font-size: 1.8vh; }
+        .house-table td.medal { text-align: center; font-weight: 700; font-size: 2vh; font-variant-numeric: tabular-nums; color: var(--ink); }
+        .house-table td.pts { text-align: right; font-weight: 800; font-size: 2.2vh; color: var(--pts); }
 
         /* ---- Tables ---- */
         table { width: 100%; border-collapse: collapse; }
@@ -105,6 +109,9 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         .win { margin-bottom: .7vh; }
         .win:last-child { margin-bottom: 0; }
         .win .wn { font-weight: 700; font-size: 1.65vh; color: #fff; }
+        .win .wh { color: var(--wh); font-weight: 600; }
+        .win .wc { color: var(--wc); font-weight: 600; }
+        .win .wsep { color: rgba(255,255,255,.3); }
         .win .wm { font-size: 1.25vh; color: var(--muted); }
         .dash { color: rgba(255,255,255,.25); }
         .badge { display: inline-block; min-width: 3.2vh; text-align: center; }
@@ -191,16 +198,22 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         houses = houses.slice(0, 5); // show top 5 houses only
         var max = 0; houses.forEach(function (h) { max = Math.max(max, h.points); });
         var rank = ['🥇','🥈','🥉'];
-        return houses.map(function (h, i) {
+        var body = houses.map(function (h, i) {
             var pct = max > 0 ? (h.points / max) * 100 : 0;
-            return '<div class="house">'
-                + '<div class="rank">' + (rank[i] || (i+1)) + '</div>'
-                + '<div class="nm"><span class="swatch" style="background:' + esc(h.color) + '"></span>' + esc(h.name) + '</div>'
-                + '<div class="barwrap"><div class="bar" style="width:' + pct + '%;background:' + esc(h.color) + '"></div></div>'
-                + '<div class="medals"><span class="mc">🥇' + h.golds + '</span><span class="mc">🥈' + h.silvers + '</span><span class="mc">🥉' + h.bronzes + '</span></div>'
-                + '<div class="pts">' + num(h.points) + '</div>'
-                + '</div>';
+            return '<tr>'
+                + '<td class="rk">' + (rank[i] || (i+1)) + '</td>'
+                + '<td class="hn"><span class="swatch" style="background:' + esc(h.color) + '"></span>' + esc(h.name) + '</td>'
+                + '<td class="barcell"><div class="barwrap"><div class="bar" style="width:' + pct + '%;background:' + esc(h.color) + '"></div></div></td>'
+                + '<td class="medal">' + h.golds + '</td>'
+                + '<td class="medal">' + h.silvers + '</td>'
+                + '<td class="medal">' + h.bronzes + '</td>'
+                + '<td class="pts">' + num(h.points) + '</td>'
+                + '</tr>';
         }).join('');
+        return '<table class="house-table"><thead><tr>'
+            + '<th class="rk">#</th><th>House</th><th class="barcol"></th>'
+            + '<th class="medal-h">🥇</th><th class="medal-h">🥈</th><th class="medal-h">🥉</th>'
+            + '<th class="r">Pts</th></tr></thead><tbody>' + body + '</tbody></table>';
     }
 
     function renderCategoryPivot(pivot) {
@@ -214,10 +227,17 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         return '<table class="cat-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
     }
 
+    function metaLine(w) {
+        var parts = [];
+        if (w.house) parts.push('<span class="wh">' + esc(w.house) + '</span>');
+        if (w.cls)   parts.push('<span class="wc">' + esc(w.cls) + '</span>');
+        if (!parts.length) return '';
+        return '<div class="wm">' + parts.join('<span class="wsep"> · </span>') + '</div>';
+    }
     function cell(list) {
         if (!list || !list.length) return '<span class="dash">—</span>';
         return list.map(function (w) {
-            return '<div class="win"><div class="wn">' + esc(w.name) + '</div>' + (w.meta ? '<div class="wm">' + esc(w.meta) + '</div>' : '') + '</div>';
+            return '<div class="win"><div class="wn">' + esc(w.name) + '</div>' + metaLine(w) + '</div>';
         }).join('');
     }
 

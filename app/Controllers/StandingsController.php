@@ -176,9 +176,12 @@ class StandingsController extends Controller
                 ];
             }
             $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
-            $meta = array_filter([$r['house_name'] ?? '', $cls]);
             if (isset($byInst[$key][$r['position']])) {
-                $byInst[$key][$r['position']][] = ['name' => $r['contestant_name'], 'meta' => implode(' · ', $meta)];
+                $byInst[$key][$r['position']][] = [
+                    'name'  => $r['contestant_name'],
+                    'house' => $r['house_name'] ?? '',
+                    'cls'   => $cls,
+                ];
             }
         }
 
