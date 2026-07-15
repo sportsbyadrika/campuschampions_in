@@ -23,15 +23,13 @@ class CertificateTemplate extends Model
     public static function sampleBody(): string
     {
         return <<<'HTML'
-<div style="font-family:'DejaVu Sans',sans-serif; color:#12395e; text-align:center;">
-    <p style="font-size:16px; margin:0 0 14px;">This is to certify that</p>
-    <p style="font-size:30px; font-weight:bold; color:#0f3a63; margin:0 0 6px; letter-spacing:.5px;">{{contestant_name}}</p>
-    <p style="font-size:14px; color:#5b6b7d; margin:0 0 18px;">{{course}} / {{division}}</p>
-    <p style="font-size:16px; margin:0 0 8px;">has been awarded</p>
-    <p style="font-size:24px; font-weight:bold; color:#b8860b; margin:0 0 8px;">{{position}} Place</p>
-    <p style="font-size:16px; margin:0 0 4px;">in <b>{{event_name}}</b></p>
-    <p style="font-size:14px; color:#5b6b7d; margin:0 0 16px;">({{event_label}})</p>
-    <p style="font-size:15px; margin:0;">at <b>{{meet_title}}</b></p>
+<div style="font-family:'DejaVu Sans',sans-serif; color:#12395e; text-align:center; line-height:1.7;">
+    <p style="font-size:16px; margin:0 0 16px;">This is to certify that</p>
+    <p style="font-size:28px; font-weight:bold; color:#0f3a63; margin:0 0 4px; letter-spacing:.5px;">{{contestant_name}}</p>
+    <p style="font-size:15px; margin:0 0 16px;">of class <b>{{course}}</b> Division <b>{{division}}</b></p>
+    <p style="font-size:16px; margin:0 0 6px;">won <b style="color:#b8860b;">{{position}} place</b> in <b>{{event_label}}</b> competition</p>
+    <p style="font-size:15px; margin:0;">held in connection with the School Annual Day Celebrations</p>
+    <p style="font-size:17px; font-weight:bold; margin:8px 0 0;">{{meet_title}}</p>
 </div>
 HTML;
     }
