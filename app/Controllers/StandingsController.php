@@ -99,10 +99,54 @@ class StandingsController extends Controller
             [(int) $meet['campus_id']]
         );
         $this->view('standings/live', [
-            'meetId'      => (int) $meetId,
-            'meetTitle'   => $meet['title'],
-            'institution' => $institution ?: '',
+            'meetId'           => (int) $meetId,
+            'meetTitle'        => $meet['title'],
+            'institution'      => $institution ?: '',
+            'meetLogo'         => !empty($meet['logo_path']) ? asset($meet['logo_path']) : '',
+            'institutionLogo'  => !empty($meet['institution_logo_path']) ? asset($meet['institution_logo_path']) : '',
+            'bannerImage'      => !empty($meet['banner_path']) ? asset($meet['banner_path']) : '',
+            'scrollSpeed'      => (int) ($meet['winners_scroll_speed'] ?? 28),
         ], null);
+    }
+
+    /**
+     * Pivot the raw house×category point rows into:
+     *   ['categories' => ['Cat A', ...], 'rows' => [ ['name','color','cells'=>[..],'total'] ]]
+     * Rows ordered by total points desc; columns follow the raw row order.
+     */
+    private function categoryPivot(array $rows): array
+    {
+        $cats = [];       // category_name (preserves first-seen order = alphabetical from query)
+        $houses = [];     // house_id => ['name','color','cells'=>[cat=>pts],'total'=>float]
+        foreach ($rows as $r) {
+            $cat = (string) $r['category_name'];
+            if (!in_array($cat, $cats, true)) {
+                $cats[] = $cat;
+            }
+            $hid = (int) $r['house_id'];
+            if (!isset($houses[$hid])) {
+                $houses[$hid] = [
+                    'name'  => $r['house_name'],
+                    'color' => $r['color_code'] ?: '#2563EB',
+                    'cells' => [],
+                    'total' => 0.0,
+                ];
+            }
+            $pts = (float) $r['points'];
+            $houses[$hid]['cells'][$cat] = $pts;
+            $houses[$hid]['total'] += $pts;
+        }
+        usort($houses, fn($a, $b) => $b['total'] <=> $a['total'] ?: strcmp($a['name'], $b['name']));
+        // Flatten cells to a positional array matching $cats for compact JSON.
+        $out = array_map(function ($h) use ($cats) {
+            return [
+                'name'   => $h['name'],
+                'color'  => $h['color'],
+                'points' => array_map(fn($c) => $h['cells'][$c] ?? 0.0, $cats),
+                'total'  => $h['total'],
+            ];
+        }, array_values($houses));
+        return ['categories' => $cats, 'rows' => $out];
     }
 
     /** JSON data for the live dashboard (polled every minute). */
@@ -139,19 +183,18 @@ class StandingsController extends Controller
         }
 
         return [
-            'meet'        => ['title' => $meet['title']],
+            'meet'        => [
+                'title'             => $meet['title'],
+                'scrollSpeed'       => (int) ($meet['winners_scroll_speed'] ?? 28),
+            ],
             'institution' => $institution ?: '',
             'houses'      => array_map(fn($h) => [
                 'name' => $h['name'], 'color' => $h['color_code'] ?: '#2563EB',
                 'points' => (float) $h['total_points'], 'golds' => (int) $h['golds'],
                 'silvers' => (int) $h['silvers'], 'bronzes' => (int) $h['bronzes'],
             ], $st->houses($meetId)),
-            'courseDivisions' => array_map(fn($c) => [
-                'label' => trim(($c['course_name'] ?? '—') . ' / ' . ($c['division_name'] ?? '—'), ' /'),
-                'golds' => (int) $c['golds'], 'silvers' => (int) $c['silvers'],
-                'bronzes' => (int) $c['bronzes'], 'points' => (float) $c['total_points'],
-            ], $st->courseDivisions($meetId)),
-            'events'      => array_values($byInst),
+            'categoryPivot' => $this->categoryPivot($st->houseCategoryPoints($meetId)),
+            'events'        => array_values($byInst),
         ];
     }
 

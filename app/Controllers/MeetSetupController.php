@@ -247,6 +247,54 @@ class MeetSetupController extends Controller
         $this->json(['success' => true, 'message' => 'Point configuration saved.']);
     }
 
+    // ================= Live-screen settings =================
+    /**
+     * Save the live big-screen settings for a meet: prize-winners scroll
+     * speed and the three images (meet logo, banner, institution logo).
+     * Each image arrives as an already-cropped file; any that is absent is
+     * left unchanged. A `remove_<field>` flag clears an existing image.
+     */
+    public function saveLiveSettings(string $meetId): void
+    {
+        $meetId = (int) $meetId;
+        $meet = $this->meetOrAbort($meetId);
+
+        $data = [];
+
+        $speed = (int) Request::input('winners_scroll_speed', 28);
+        $data['winners_scroll_speed'] = max(5, min(200, $speed));
+
+        $images = [
+            'logo'             => 'logo_path',
+            'banner'           => 'banner_path',
+            'institution_logo' => 'institution_logo_path',
+        ];
+        foreach ($images as $field => $column) {
+            $file = Request::file($field);
+            if ($file && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                try {
+                    $data[$column] = \App\Core\FileUpload::image($file, 'meets');
+                    \App\Core\FileUpload::delete($meet[$column] ?? null);
+                } catch (\RuntimeException $e) {
+                    $this->json(['success' => false, 'errors' => [$field => $e->getMessage()], 'message' => $e->getMessage()], 422);
+                }
+            } elseif (Request::input('remove_' . $field)) {
+                \App\Core\FileUpload::delete($meet[$column] ?? null);
+                $data[$column] = null;
+            }
+        }
+
+        (new MeetMaster())->update($meetId, $data);
+        Audit::log('update', 'meet_masters', $meetId, null, $data);
+
+        $paths = [
+            'logo'             => !empty($data['logo_path']) ? asset($data['logo_path']) : (isset($data['logo_path']) ? '' : ($meet['logo_path'] ? asset($meet['logo_path']) : '')),
+            'banner'           => !empty($data['banner_path']) ? asset($data['banner_path']) : (isset($data['banner_path']) ? '' : ($meet['banner_path'] ? asset($meet['banner_path']) : '')),
+            'institution_logo' => !empty($data['institution_logo_path']) ? asset($data['institution_logo_path']) : (isset($data['institution_logo_path']) ? '' : ($meet['institution_logo_path'] ? asset($meet['institution_logo_path']) : '')),
+        ];
+        $this->json(['success' => true, 'message' => 'Live-screen settings saved.', 'paths' => $paths, 'winners_scroll_speed' => $data['winners_scroll_speed']]);
+    }
+
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------

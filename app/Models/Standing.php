@@ -90,6 +90,30 @@ class Standing
         );
     }
 
+    /**
+     * House × Category total points (raw rows for pivoting).
+     * One row per (house, category) that has at least one scored result.
+     */
+    public function houseCategoryPoints(int $meetId): array
+    {
+        return $this->db->fetchAll(
+            "SELECT h.id AS house_id, h.name AS house_name, h.color_code,
+                    c.id AS category_id, c.name AS category_name,
+                    COALESCE(SUM(r.points), 0) AS points
+             FROM results r
+             JOIN contestant_masters cm ON cm.id = r.contestant_id
+             JOIN houses h ON h.id = cm.house_id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             JOIN categories c ON c.id = ei.category_id
+             WHERE d.meet_id = ?
+             GROUP BY h.id, h.name, h.color_code, c.id, c.name
+             ORDER BY c.name ASC, h.name ASC",
+            [$meetId]
+        );
+    }
+
     /** Discipline-wise medal counts + total points, ordered by points. */
     public function disciplines(int $meetId): array
     {

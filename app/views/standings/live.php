@@ -1,6 +1,11 @@
 <?php
-/** @var int $meetId @var string $meetTitle @var string $institution */
+/** @var int $meetId @var string $meetTitle @var string $institution
+ *  @var string $meetLogo @var string $institutionLogo @var string $bannerImage @var int $scrollSpeed */
 $dataUrl = url('standings/live-data/' . $meetId);
+$meetLogo        = $meetLogo ?? '';
+$institutionLogo = $institutionLogo ?? '';
+$bannerImage     = $bannerImage ?? '';
+$scrollSpeed     = (int) ($scrollSpeed ?? 28);
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +13,12 @@ $dataUrl = url('standings/live-data/' . $meetId);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($meetTitle) ?> — Live Standings</title>
     <style>
-        :root { --gold:#fbbf24; --silver:#cbd5e1; --bronze:#d97706; --ink:#e5edf7; --muted:#93a4bd; --line:rgba(255,255,255,.12); }
+        :root {
+            --gold:#fbbf24; --silver:#cbd5e1; --bronze:#d97706;
+            --ink:#e5edf7; --muted:#93a4bd; --line:rgba(255,255,255,.12);
+            --pts:#fbbf24;      /* house total points accent */
+            --evt:#38bdf8;      /* event instance emphasis */
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; }
         body {
@@ -24,21 +34,24 @@ $dataUrl = url('standings/live-data/' . $meetId);
 
         /* ---- Banner ---- */
         .banner {
-            display: flex; align-items: center; gap: 1.5vw;
+            display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; gap: 1.5vw;
             background: rgba(255,255,255,.05); border: 1px solid var(--line);
-            border-radius: 16px; padding: 1.2vh 1.5vw; backdrop-filter: blur(6px);
+            border-radius: 16px; padding: 1.1vh 1.5vw; backdrop-filter: blur(6px);
         }
+        .brand-left { display: flex; align-items: center; gap: 1vw; }
         .logo {
-            width: 6.4vh; height: 6.4vh; min-width: 6.4vh; border-radius: 14px;
+            width: 7vh; height: 7vh; min-width: 7vh; border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #2563EB, #1e40af);
-            font-weight: 800; font-size: 2.6vh; color: #fff; letter-spacing: .5px;
+            font-weight: 800; font-size: 2.8vh; color: #fff; letter-spacing: .5px;
             box-shadow: 0 6px 18px rgba(37,99,235,.4);
         }
-        .banner .titles { flex: 1; text-align: center; }
+        .inst-logo { height: 8vh; max-width: 14vw; object-fit: contain; border-radius: 10px; }
+        .brand-center { text-align: center; display: flex; flex-direction: column; align-items: center; gap: .4vh; }
+        .meet-logo { height: 9vh; max-width: 100%; object-fit: contain; }
         .banner .meet { font-size: 3.2vh; font-weight: 800; letter-spacing: .4px; }
-        .banner .inst { font-size: 1.9vh; color: var(--muted); margin-top: .3vh; }
-        .clock { text-align: right; min-width: 15vw; }
+        .banner .inst { font-size: 1.9vh; color: var(--muted); }
+        .clock { text-align: right; }
         .clock .time { font-size: 3.2vh; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; color: #fff; }
         .clock .date { font-size: 1.7vh; color: var(--muted); }
 
@@ -53,18 +66,18 @@ $dataUrl = url('standings/live-data/' . $meetId);
         .panel > .head { padding: 1.1vh 1.2vw; border-bottom: 1px solid var(--line); font-size: 2vh; font-weight: 700; color: #fff; display: flex; align-items: center; gap: .5vw; }
         .panel > .head .dot { color: var(--gold); }
         .panel > .body { padding: 1vh 1.2vw; overflow: hidden; flex: 1; min-height: 0; }
-        .left-house { flex: none; }                 /* compact: sized to <= 5 rows */
-        .left-cd { flex: 1; min-height: 0; }         /* takes the rest -> ~12 rows */
+        .col > .panel { flex: 1; }              /* left column: two panels at 50/50 height */
 
-        /* ---- House standings ---- */
-        .house { display: flex; align-items: center; gap: .7vw; margin-bottom: 1.3vh; }
-        .house .rank { width: 2.2vh; text-align: center; font-weight: 800; color: var(--muted); font-size: 1.7vh; }
-        .house .nm { width: 7.5vw; display: flex; align-items: center; gap: .4vw; font-weight: 700; font-size: 1.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .house .swatch { width: 1.5vh; height: 1.5vh; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); flex: none; }
-        .house .barwrap { flex: 1; height: 1.5vh; background: rgba(255,255,255,.09); border-radius: 999px; overflow: hidden; }
+        /* ---- House standings (enlarged) ---- */
+        .house { display: flex; align-items: center; gap: .8vw; margin-bottom: 1.7vh; }
+        .house .rank { width: 2.6vh; text-align: center; font-weight: 800; color: var(--muted); font-size: 2.1vh; }
+        .house .nm { width: 8vw; display: flex; align-items: center; gap: .5vw; font-weight: 700; font-size: 2.2vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .house .swatch { width: 1.8vh; height: 1.8vh; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); flex: none; }
+        .house .barwrap { flex: 1; height: 1.8vh; background: rgba(255,255,255,.09); border-radius: 999px; overflow: hidden; }
         .house .bar { height: 100%; border-radius: 999px; transition: width .6s ease; }
-        .house .medals { font-size: 1.5vh; color: var(--muted); white-space: nowrap; }
-        .house .pts { width: 5.5vw; text-align: right; font-weight: 800; font-size: 1.9vh; color: #fff; }
+        .house .medals { font-size: 1.9vh; color: var(--muted); white-space: nowrap; display: flex; gap: .7vw; }
+        .house .medals .mc { display: inline-flex; align-items: center; gap: .2vw; }
+        .house .pts { width: 6vw; text-align: right; font-weight: 800; font-size: 2.4vh; color: var(--pts); }
 
         /* ---- Tables ---- */
         table { width: 100%; border-collapse: collapse; }
@@ -72,21 +85,27 @@ $dataUrl = url('standings/live-data/' . $meetId);
         th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 1.25vh; letter-spacing: .05em; position: sticky; top: 0; background: rgba(15,23,42,.85); }
         td.c, th.c { text-align: center; }
         td.r, th.r { text-align: right; }
-        .cd-table td.pts { font-weight: 800; color: #fff; }
+
+        /* ---- Category pivot ---- */
+        .cat-table td.hname { font-weight: 700; color: #fff; white-space: nowrap; }
+        .cat-table td.hname .swatch { display: inline-block; width: 1.4vh; height: 1.4vh; border-radius: 50%; margin-right: .4vw; vertical-align: middle; border: 1px solid rgba(255,255,255,.3); }
+        .cat-table td.num { text-align: center; font-variant-numeric: tabular-nums; }
+        .cat-table td.total { text-align: right; font-weight: 800; color: var(--pts); }
+        .cat-table th.total { text-align: right; }
 
         /* ---- Winners scroller ---- */
         .scroller { position: relative; height: 100%; overflow: hidden; }
         .track { will-change: transform; }
         .wtable th { background: rgba(15,23,42,.92); }
         .wtable td { vertical-align: top; }
-        .wtable .evt { font-weight: 700; font-size: 1.7vh; color: #fff; }
-        .wtable .evt small { display: block; color: var(--muted); font-weight: 400; font-size: 1.25vh; margin-top: .2vh; }
+        .wtable td.evtcell { border-left: .35vw solid var(--evt); }
+        .wtable .evt { font-weight: 800; font-size: 2.1vh; color: var(--evt); letter-spacing: .3px; }
+        .wtable .evt small { display: block; color: var(--muted); font-weight: 400; font-size: 1.3vh; margin-top: .3vh; }
         .win { margin-bottom: .7vh; }
         .win:last-child { margin-bottom: 0; }
         .win .wn { font-weight: 700; font-size: 1.65vh; color: #fff; }
         .win .wm { font-size: 1.25vh; color: var(--muted); }
         .dash { color: rgba(255,255,255,.25); }
-        .pos-first  td.pos { color: var(--gold); }
         .badge { display: inline-block; min-width: 3.2vh; text-align: center; }
         .loading { text-align: center; color: var(--muted); padding: 4vh; font-size: 2vh; }
     </style>
@@ -95,10 +114,20 @@ $dataUrl = url('standings/live-data/' . $meetId);
 <div class="board">
     <!-- Banner -->
     <div class="banner">
-        <div class="logo" id="logo"><?= e(strtoupper(mb_substr($institution ?: 'C', 0, 1))) ?></div>
-        <div class="titles">
-            <div class="meet" id="meetTitle"><?= e($meetTitle) ?></div>
-            <div class="inst" id="instName"><?= e($institution) ?></div>
+        <div class="brand-left">
+            <?php if ($institutionLogo): ?>
+                <img class="inst-logo" src="<?= e($institutionLogo) ?>" alt="<?= e($institution) ?>">
+            <?php else: ?>
+                <div class="logo"><?= e(strtoupper(mb_substr($institution ?: 'C', 0, 1))) ?></div>
+            <?php endif; ?>
+        </div>
+        <div class="brand-center">
+            <?php if ($meetLogo): ?>
+                <img class="meet-logo" src="<?= e($meetLogo) ?>" alt="<?= e($meetTitle) ?>">
+            <?php else: ?>
+                <div class="meet" id="meetTitle"><?= e($meetTitle) ?></div>
+                <div class="inst" id="instName"><?= e($institution) ?></div>
+            <?php endif; ?>
         </div>
         <div class="clock">
             <div class="time" id="clockTime">--:--:--</div>
@@ -109,14 +138,14 @@ $dataUrl = url('standings/live-data/' . $meetId);
     <!-- Two columns 1:3 -->
     <div class="grid">
         <div class="col">
-            <div class="panel left-house">
+            <div class="panel">
                 <div class="head"><span class="dot">🏆</span> House Standings</div>
                 <div class="body" id="housePanel"><div class="loading">Loading…</div></div>
             </div>
-            <div class="panel left-cd">
-                <div class="head"><span class="dot">🎓</span> Class / Division</div>
+            <div class="panel">
+                <div class="head"><span class="dot">📚</span> House × Category — Points</div>
                 <div class="body">
-                    <div class="scroller" id="cdScroller"><div class="track" id="cdTrack"><div class="loading">Loading…</div></div></div>
+                    <div class="scroller" id="catScroller"><div class="track" id="catTrack"><div class="loading">Loading…</div></div></div>
                 </div>
             </div>
         </div>
@@ -138,7 +167,8 @@ $dataUrl = url('standings/live-data/' . $meetId);
     'use strict';
     var DATA_URL = <?= json_encode($dataUrl, JSON_UNESCAPED_SLASHES) ?>;
     var REFRESH_MS = 30000;   // 30 seconds
-    var SPEED = 28;           // px per second
+    var WIN_SPEED = <?= max(5, min(200, $scrollSpeed)) ?>;   // px/s for Prize Winners (from meet settings)
+    var CAT_SPEED = 24;       // px/s for the category pivot
 
     function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
     function num(v) { v = Number(v) || 0; return (v % 1 === 0) ? String(v) : v.toFixed(1); }
@@ -166,18 +196,21 @@ $dataUrl = url('standings/live-data/' . $meetId);
                 + '<div class="rank">' + (rank[i] || (i+1)) + '</div>'
                 + '<div class="nm"><span class="swatch" style="background:' + esc(h.color) + '"></span>' + esc(h.name) + '</div>'
                 + '<div class="barwrap"><div class="bar" style="width:' + pct + '%;background:' + esc(h.color) + '"></div></div>'
-                + '<div class="medals">🥇' + h.golds + ' 🥈' + h.silvers + ' 🥉' + h.bronzes + '</div>'
+                + '<div class="medals"><span class="mc">🥇' + h.golds + '</span><span class="mc">🥈' + h.silvers + '</span><span class="mc">🥉' + h.bronzes + '</span></div>'
                 + '<div class="pts">' + num(h.points) + '</div>'
                 + '</div>';
         }).join('');
     }
 
-    function renderCd(cds) {
-        if (!cds.length) return '<div class="loading">No results yet.</div>';
-        var rows = cds.map(function (c) {
-            return '<tr><td>' + esc(c.label) + '</td><td class="c">' + c.golds + '</td><td class="c">' + c.silvers + '</td><td class="c">' + c.bronzes + '</td><td class="r pts">' + num(c.points) + '</td></tr>';
+    function renderCategoryPivot(pivot) {
+        if (!pivot || !pivot.rows || !pivot.rows.length) return '<div class="loading">No results yet.</div>';
+        var cats = pivot.categories || [];
+        var head = '<tr><th>House</th>' + cats.map(function (c) { return '<th class="c">' + esc(c) + '</th>'; }).join('') + '<th class="total">Total</th></tr>';
+        var body = pivot.rows.map(function (r) {
+            var cells = (r.points || []).map(function (p) { return '<td class="num">' + (p ? num(p) : '<span class="dash">·</span>') + '</td>'; }).join('');
+            return '<tr><td class="hname"><span class="swatch" style="background:' + esc(r.color) + '"></span>' + esc(r.name) + '</td>' + cells + '<td class="total">' + num(r.total) + '</td></tr>';
         }).join('');
-        return '<table class="cd-table"><thead><tr><th>Course / Division</th><th class="c">🥇</th><th class="c">🥈</th><th class="c">🥉</th><th class="r">Pts</th></tr></thead><tbody>' + rows + '</tbody></table>';
+        return '<table class="cat-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table>';
     }
 
     function cell(list) {
@@ -191,7 +224,7 @@ $dataUrl = url('standings/live-data/' . $meetId);
         if (!events.length) return '<div class="loading">No prize winners yet.</div>';
         var rows = events.map(function (ev) {
             return '<tr>'
-                + '<td class="evt">' + esc(ev.label) + '<small>' + esc(ev.sub) + '</small></td>'
+                + '<td class="evtcell"><span class="evt">' + esc(ev.label) + '</span><small>' + esc(ev.sub) + '</small></td>'
                 + '<td>' + cell(ev.first) + '</td>'
                 + '<td>' + cell(ev.second) + '</td>'
                 + '<td>' + cell(ev.third) + '</td>'
@@ -202,8 +235,8 @@ $dataUrl = url('standings/live-data/' . $meetId);
 
     // ---------- Seamless auto-scroll (reusable marquee) ----------
     // Shows a single copy; only adds a duplicate (for a seamless loop) when the
-    // content actually overflows and needs to scroll.
-    function makeMarquee(scrollerEl, trackEl) {
+    // content actually overflows and needs to scroll. Each marquee has its own speed.
+    function makeMarquee(scrollerEl, trackEl, getSpeed) {
         var offset = 0, copyH = 0, needScroll = false, html = '';
         function set(h) { html = h; layout(); }
         function layout() {
@@ -222,7 +255,7 @@ $dataUrl = url('standings/live-data/' . $meetId);
         }
         function step(dt) {
             if (needScroll && copyH > 0) {
-                offset += SPEED * dt;
+                offset += getSpeed() * dt;
                 if (offset >= copyH) offset -= copyH;
                 trackEl.style.transform = 'translateY(' + (-offset) + 'px)';
             }
@@ -231,9 +264,9 @@ $dataUrl = url('standings/live-data/' . $meetId);
         return { set: set, layout: layout, step: step, has: has };
     }
 
-    var winMarquee = makeMarquee(document.getElementById('scroller'), document.getElementById('track'));
-    var cdMarquee  = makeMarquee(document.getElementById('cdScroller'), document.getElementById('cdTrack'));
-    var marquees = [winMarquee, cdMarquee];
+    var winMarquee = makeMarquee(document.getElementById('scroller'), document.getElementById('track'), function () { return WIN_SPEED; });
+    var catMarquee = makeMarquee(document.getElementById('catScroller'), document.getElementById('catTrack'), function () { return CAT_SPEED; });
+    var marquees = [winMarquee, catMarquee];
 
     var last = null;
     function frame(ts) {
@@ -247,13 +280,13 @@ $dataUrl = url('standings/live-data/' . $meetId);
 
     // ---------- Data load ----------
     function apply(data) {
-        if (data.meet && data.meet.title) document.getElementById('meetTitle').textContent = data.meet.title;
-        if (data.institution != null) {
-            document.getElementById('instName').textContent = data.institution;
-            document.getElementById('logo').textContent = (data.institution || 'C').charAt(0).toUpperCase();
+        if (data.meet) {
+            if (data.meet.title) { var mt = document.getElementById('meetTitle'); if (mt) mt.textContent = data.meet.title; }
+            if (data.meet.scrollSpeed) WIN_SPEED = Number(data.meet.scrollSpeed) || WIN_SPEED;
         }
+        if (data.institution != null) { var inm = document.getElementById('instName'); if (inm) inm.textContent = data.institution; }
         document.getElementById('housePanel').innerHTML = renderHouses(data.houses || []);
-        cdMarquee.set(renderCd(data.courseDivisions || []));
+        catMarquee.set(renderCategoryPivot(data.categoryPivot));
         winMarquee.set(winnersTable(data.events || []));
     }
     function load() {

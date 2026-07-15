@@ -10,7 +10,10 @@ class MeetMaster extends Model
 {
     protected string $table = 'meet_masters';
     protected bool $campusScoped = true;
-    protected array $fillable = ['title', 'start_date', 'end_date', 'location', 'details', 'campus_id', 'status'];
+    protected array $fillable = [
+        'title', 'start_date', 'end_date', 'location', 'details', 'campus_id', 'status',
+        'logo_path', 'banner_path', 'institution_logo_path', 'winners_scroll_speed',
+    ];
 
     public function options(): array
     {
