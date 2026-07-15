@@ -117,6 +117,7 @@ $router->get('/results',                        'ResultController@index',      [
 $router->get('/results/{instanceId}/entry',     'ResultController@entry',      ['auth']);
 $router->post('/results/{instanceId}/save',     'ResultController@save',       ['auth']);
 $router->post('/results/{instanceId}/publish',  'ResultController@togglePublish', ['auth']);
+$router->post('/results/{instanceId}/clear',     'ResultController@clearResults', ['auth']);
 $router->get('/results/{instanceId}/export',    'ResultController@export',     ['auth']);
 $router->get('/results/{instanceId}/assign',    'ResultController@assignForm', ['auth']);
 $router->post('/results/{instanceId}/assign',   'ResultController@assign',     ['auth']);
@@ -147,6 +148,8 @@ $router->get('/certificates',                        'CertificateController@inde
 $router->get('/certificates/download/{certId}',      'CertificateController@download',      ['auth']);
 $router->get('/certificates/{instanceId}/generate',  'CertificateController@generateForm',  ['auth']);
 $router->post('/certificates/{instanceId}/generate', 'CertificateController@generate',      ['auth']);
+$router->get('/certificates/{instanceId}/print-all',  'CertificateController@printAll',      ['auth']);
+$router->post('/certificates/{certId}/delete',        'CertificateController@deleteCertificate', ['auth']);
 
 // ---------------------------------------------------------------------
 // Audit logs & system reports (Super Admin)

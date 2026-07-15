@@ -74,6 +74,10 @@ $placeholders = [
         <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
             <h3 class="font-semibold text-slate-900">Certificate Number</h3>
             <p class="text-xs text-slate-500 mt-0.5">Printed top-left. Number = prefix + running number + suffix (auto-increments per meet).</p>
+            <div class="mt-3">
+                <label class="form-label">Label <span class="text-xs font-normal text-slate-400">(optional — printed before the number)</span></label>
+                <input type="text" name="number_label" value="<?= $v('number_label') ?>" maxlength="60" class="form-input" placeholder="e.g. Certificate No:">
+            </div>
             <div class="mt-3 grid grid-cols-3 gap-3">
                 <div>
                     <label class="form-label">Prefix</label>

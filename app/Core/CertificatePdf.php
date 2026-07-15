@@ -50,9 +50,12 @@ class CertificatePdf
 
         $body = self::render((string) ($tpl['body_html'] ?? ''), $data);
 
+        $label = trim((string) ($tpl['number_label'] ?? ''));
+        $numText = ($label !== '' ? htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . ' ' : '') . $num;
+
         $out = '';
         if ($num !== '') {
-            $out .= '<div style="position:absolute; top:' . $nt . 'mm; left:' . $nl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:' . $nfs . 'px; color:' . $nfc . ';">' . $num . '</div>';
+            $out .= '<div style="position:absolute; top:' . $nt . 'mm; left:' . $nl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:' . $nfs . 'px; color:' . $nfc . ';">' . $numText . '</div>';
         }
         if ($date !== '') {
             $out .= '<div style="position:absolute; top:' . $dt . 'mm; left:' . $dl . 'mm; font-family:\'DejaVu Sans\',sans-serif; font-size:' . $dfs . 'px; color:' . $dfc . ';">' . $date . '</div>';
@@ -107,5 +110,23 @@ class CertificatePdf
     {
         $dompdf = self::dompdf($html, $orientation);
         $dompdf->stream($filename . '.pdf', ['Attachment' => false]);
+    }
+
+    /**
+     * Stream several composed certificate overlays as one multi-page PDF (for
+     * bulk printing). Each page is a full-page positioned container so its
+     * absolute number/date/content stay aligned per page.
+     */
+    public static function streamCombined(array $composedPages, string $orientation, string $filename): void
+    {
+        [$pw, $ph] = $orientation === 'landscape' ? [297, 210] : [210, 297];
+        $pages = array_values($composedPages);
+        $n = count($pages);
+        $html = '';
+        foreach ($pages as $i => $c) {
+            $brk = $i < $n - 1 ? ' page-break-after:always;' : '';
+            $html .= '<div style="position:relative; width:' . $pw . 'mm; height:' . $ph . 'mm; overflow:hidden;' . $brk . '">' . $c . '</div>';
+        }
+        self::stream($html, $filename, $orientation);
     }
 }

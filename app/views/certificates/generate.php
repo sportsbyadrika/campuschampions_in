@@ -31,6 +31,9 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
             </select>
         </div>
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-bolt"></i> Generate Selected</button>
+        <?php if (($certCount ?? 0) > 0): ?>
+            <a href="<?= e(url('certificates/' . (int) $instance['id'] . '/print-all')) ?>" target="_blank" rel="noopener" class="btn btn-secondary"><i class="fa-solid fa-print"></i> Print All (<?= (int) $certCount ?>)</a>
+        <?php endif; ?>
     </div>
 
     <div class="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -48,9 +51,10 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         <td class="font-medium"><?= e($c['name']) ?></td>
                         <td><?= e($posLabels[$c['position']] ?? $c['position']) ?></td>
                         <td><?= e($c['certificate_number'] ?? '—') ?></td>
-                        <td class="text-right">
+                        <td class="text-right whitespace-nowrap">
                             <?php if (!empty($c['certificate_id']) && !empty($c['file_path'])): ?>
                                 <a href="<?= e(url('certificates/download/' . (int) $c['certificate_id'])) ?>" target="_blank" class="text-primary hover:underline text-sm"><i class="fa-solid fa-file-pdf"></i> View</a>
+                                <button type="button" class="cert-del text-slate-400 hover:text-rose-600 text-sm px-2" data-del="<?= e(url('certificates/' . (int) $c['certificate_id'] . '/delete')) ?>" title="Delete certificate (to regenerate)"><i class="fa-solid fa-trash"></i></button>
                             <?php else: ?>
                                 <span class="text-xs text-slate-400">Not generated</span>
                             <?php endif; ?>
@@ -65,6 +69,21 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
 
 <script>
 window.CERT = { generate: <?= json_encode(url('certificates/' . (int) $instance['id'] . '/generate')) ?> };
+document.querySelectorAll('.cert-del').forEach(function (b) {
+    b.addEventListener('click', async function () {
+        if (!confirm('Delete this certificate? You can regenerate it afterwards.')) return;
+        b.disabled = true;
+        var fd = new FormData();
+        try {
+            var res = await window.apiFetch(b.dataset.del, { method: 'POST', body: fd });
+            window.Toast.show(res.message || 'Deleted.', 'success');
+            setTimeout(function () { location.reload(); }, 500);
+        } catch (err) {
+            window.Toast.show(err.message || 'Failed to delete.', 'error');
+            b.disabled = false;
+        }
+    });
+});
 </script>
 <script src="<?= e(asset('js/certificates.js')) ?>"></script>
 <?php endif; ?>

@@ -11,6 +11,12 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
             <p class="text-sm text-slate-500"><?= e($instance['discipline_name']) ?> · <?= e($instance['event_name']) ?> · <?= e($instance['category_name']) ?></p>
         </div>
     </div>
+    <?php if (!empty($existing)): ?>
+        <form method="post" action="<?= e(url('results/' . (int) $instance['id'] . '/clear')) ?>" onsubmit="return confirm('Delete ALL entered results for this event? This cannot be undone.');">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete All Results</button>
+        </form>
+    <?php endif; ?>
 </div>
 
 <div class="mt-4 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-800">

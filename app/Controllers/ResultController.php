@@ -6,9 +6,11 @@ namespace App\Controllers;
 
 use App\Core\Audit;
 use App\Core\Auth;
+use App\Core\Cache;
 use App\Core\Controller;
 use App\Core\Csv;
 use App\Core\Database;
+use App\Core\Flash;
 use App\Core\Request;
 use App\Models\ContestantRegistration;
 use App\Models\EventInstance;
@@ -186,6 +188,20 @@ class ResultController extends Controller
         \App\Core\Cache::flush(); // invalidate public results cache
         Audit::log('result_entry', 'results', $instanceId, null, ['saved' => $saved]);
         $this->json(['success' => true, 'message' => "Saved results for {$saved} contestant(s)."]);
+    }
+
+    /** Delete every result entered for an instance (e.g. to re-enter). */
+    public function clearResults(string $instanceId): void
+    {
+        $instanceId = (int) $instanceId;
+        $this->instanceForEntry($instanceId); // authorize + campus + assignment checks
+        $db = Database::instance();
+        $count = (int) $db->scalar("SELECT COUNT(*) FROM results WHERE event_instance_id = ?", [$instanceId]);
+        $db->query("DELETE FROM results WHERE event_instance_id = ?", [$instanceId]);
+        Cache::flush(); // standings / public surfaces read results
+        Audit::log('clear_results', 'results', $instanceId, null, ['deleted' => $count]);
+        Flash::success("Deleted {$count} result(s) for this event.");
+        $this->redirect('/results/' . $instanceId . '/entry');
     }
 
     // ------------------------------------------------------------------

@@ -344,6 +344,7 @@ CREATE TABLE IF NOT EXISTS `certificate_templates` (
     `margin_left`   SMALLINT UNSIGNED NOT NULL DEFAULT 22,
     `number_top`    SMALLINT UNSIGNED NOT NULL DEFAULT 12,
     `number_left`   SMALLINT UNSIGNED NOT NULL DEFAULT 15,
+    `number_label`  VARCHAR(60) NOT NULL DEFAULT '',
     `number_font_size`  SMALLINT UNSIGNED NOT NULL DEFAULT 11,
     `number_font_color` VARCHAR(7) NOT NULL DEFAULT '#333333',
     `date_top`      SMALLINT UNSIGNED NOT NULL DEFAULT 262,

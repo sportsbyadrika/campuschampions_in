@@ -95,7 +95,86 @@ class CertificateController extends Controller
             'instance'    => $instance,
             'contestants' => $contestants,
             'templates'   => $templates,
+            'certCount'   => (int) Database::instance()->scalar(
+                "SELECT COUNT(*) FROM certificates WHERE event_instance_id = ?", [$instanceId]
+            ),
         ]);
+    }
+
+    /** Bulk view: all generated certificates for an instance as one PDF. */
+    public function printAll(string $instanceId): void
+    {
+        $instanceId = (int) $instanceId;
+        $instance = $this->instanceOrAbort($instanceId);
+
+        $rows = Database::instance()->fetchAll(
+            "SELECT ce.certificate_number, ce.issue_date, ce.template_used,
+                    cm.name AS contestant_name, cm.unique_number, h.name AS house_name,
+                    co.name AS course_name, dv.name AS division_name, r.position
+             FROM certificates ce
+             JOIN contestant_masters cm ON cm.id = ce.contestant_id
+             JOIN results r ON r.contestant_id = cm.id AND r.event_instance_id = ce.event_instance_id
+             LEFT JOIN houses h ON h.id = cm.house_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
+             WHERE ce.event_instance_id = ?
+             ORDER BY FIELD(r.position,'first','second','third','participant'), cm.name",
+            [$instanceId]
+        );
+        if (empty($rows)) {
+            $this->abort(404, 'No certificates have been generated for this event yet.');
+        }
+
+        $tplModel = new CertificateTemplate();
+        $tplCache = [];
+        $orientation = 'portrait';
+        $pages = [];
+        foreach ($rows as $row) {
+            $tid = (int) $row['template_used'];
+            if (!array_key_exists($tid, $tplCache)) {
+                $tplCache[$tid] = $tplModel->usableById($tid);
+            }
+            $tpl = $tplCache[$tid];
+            if (!$tpl) {
+                continue;
+            }
+            $orientation = $tpl['orientation'] ?? 'portrait';
+            $pages[] = CertificatePdf::compose($tpl, [
+                'contestant_name'   => $row['contestant_name'],
+                'unique_number'     => $row['unique_number'],
+                'house_name'        => $row['house_name'] ?? '',
+                'course'            => $row['course_name'] ?? '',
+                'division'          => $row['division_name'] ?? '',
+                'position'          => self::POS_LABELS[$row['position']] ?? ucfirst($row['position']),
+                'event_label'       => $instance['label'],
+                'event_name'        => $instance['event_name'],
+                'category'          => $instance['category_name'],
+                'meet_title'        => $instance['meet_title'],
+                'issue_date'        => $row['issue_date'] ? date('d M Y', strtotime((string) $row['issue_date'])) : '',
+                'certificate_number'=> $row['certificate_number'],
+            ]);
+        }
+        CertificatePdf::streamCombined($pages, $orientation, 'certificates_' . $instanceId);
+    }
+
+    /** Delete a generated certificate (so it can be regenerated after a fix). */
+    public function deleteCertificate(string $certId): void
+    {
+        $this->authorize('super_admin', 'campus_admin', 'event_user');
+        $certId = (int) $certId;
+        $cert = (new Certificate())->find($certId);
+        if (!$cert) {
+            $this->json(['success' => false, 'message' => 'Certificate not found.'], 404);
+        }
+        // Ownership: the certificate's instance must be in the user's campus.
+        $detail = (new EventInstance())->detail((int) $cert['event_instance_id']);
+        if (!$detail || (Auth::campusId() !== null && (int) $detail['campus_id'] !== (int) Auth::campusId())) {
+            $this->json(['success' => false, 'message' => 'Not allowed.'], 403);
+        }
+        \App\Core\FileUpload::delete($cert['file_path'] ?? null);
+        (new Certificate())->delete($certId);
+        Audit::log('delete', 'certificates', $certId, $cert, null);
+        $this->json(['success' => true, 'message' => 'Certificate deleted.']);
     }
 
     // Generate certificates for selected contestants

@@ -14,7 +14,7 @@ class CertificateTemplate extends Model
     protected array $fillable = [
         'name', 'body_html', 'orientation',
         'margin_top', 'margin_right', 'margin_bottom', 'margin_left',
-        'number_top', 'number_left', 'number_font_size', 'number_font_color',
+        'number_top', 'number_left', 'number_label', 'number_font_size', 'number_font_color',
         'date_top', 'date_left', 'date_font_size', 'date_font_color',
         'number_prefix', 'number_suffix', 'number_next',
         'campus_id', 'is_default', 'status',
