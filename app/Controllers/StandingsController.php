@@ -29,6 +29,7 @@ class StandingsController extends Controller
         $houses = [];
         $events = [];
         $disciplines = [];
+        $courseDivisions = [];
         $meet = null;
 
         if ($meetId > 0) {
@@ -39,8 +40,9 @@ class StandingsController extends Controller
             $standing = new Standing();
             $houses = $standing->houses($meetId);
             $disciplines = $standing->disciplines($meetId);
+            $courseDivisions = $standing->courseDivisions($meetId);
 
-            // Group prize winners by event instance
+            // Group prize winners by event instance, then by position (for the table)
             foreach ($standing->eventResults($meetId) as $r) {
                 $key = (int) $r['instance_id'];
                 if (!isset($events[$key])) {
@@ -49,22 +51,27 @@ class StandingsController extends Controller
                         'discipline' => $r['discipline_name'],
                         'event'      => $r['event_name'],
                         'category'   => $r['category_name'],
-                        'winners'    => [],
+                        'first'      => [],
+                        'second'     => [],
+                        'third'      => [],
                     ];
                 }
-                $events[$key]['winners'][] = $r;
+                if (isset($events[$key][$r['position']])) {
+                    $events[$key][$r['position']][] = $r;
+                }
             }
             $events = array_values($events);
         }
 
         $this->view('standings/index', [
-            'title'       => 'Championship Standings',
-            'meets'       => $meets,
-            'meetId'      => $meetId,
-            'meet'        => $meet,
-            'houses'      => $houses,
-            'events'      => $events,
-            'disciplines' => $disciplines,
+            'title'           => 'Championship Standings',
+            'meets'           => $meets,
+            'meetId'          => $meetId,
+            'meet'            => $meet,
+            'houses'          => $houses,
+            'events'          => $events,
+            'disciplines'     => $disciplines,
+            'courseDivisions' => $courseDivisions,
         ]);
     }
 
@@ -92,6 +99,15 @@ class StandingsController extends Controller
                 rtrim(rtrim(number_format((float) $d['total_points'], 2), '0'), '.'),
             ], $standing->disciplines($meetId));
             Csv::download('discipline_standings', ['Discipline', 'First', 'Second', 'Third', 'Total Points'], $rows);
+        }
+
+        if ($type === 'course-divisions') {
+            $rows = array_map(fn($d) => [
+                trim(($d['course_name'] ?? '—') . ' / ' . ($d['division_name'] ?? '—'), ' /'),
+                (int) $d['golds'], (int) $d['silvers'], (int) $d['bronzes'],
+                rtrim(rtrim(number_format((float) $d['total_points'], 2), '0'), '.'),
+            ], $standing->courseDivisions($meetId));
+            Csv::download('course_division_standings', ['Course/Division', 'First', 'Second', 'Third', 'Total Points'], $rows);
         }
 
         // Prize winners by event instance

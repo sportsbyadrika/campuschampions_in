@@ -67,6 +67,29 @@ class Standing
         );
     }
 
+    /** Course/Division-wise medal counts + total points, ordered by points. */
+    public function courseDivisions(int $meetId): array
+    {
+        return $this->db->fetchAll(
+            "SELECT co.name AS course_name, dv.name AS division_name,
+                    SUM(CASE WHEN r.position='first'  THEN 1 ELSE 0 END) AS golds,
+                    SUM(CASE WHEN r.position='second' THEN 1 ELSE 0 END) AS silvers,
+                    SUM(CASE WHEN r.position='third'  THEN 1 ELSE 0 END) AS bronzes,
+                    COALESCE(SUM(r.points), 0) AS total_points
+             FROM results r
+             JOIN contestant_masters cm ON cm.id = r.contestant_id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
+             WHERE d.meet_id = ?
+             GROUP BY cm.course_id, cm.division_id
+             ORDER BY total_points DESC, golds DESC, co.name ASC",
+            [$meetId]
+        );
+    }
+
     /** Discipline-wise medal counts + total points, ordered by points. */
     public function disciplines(int $meetId): array
     {
