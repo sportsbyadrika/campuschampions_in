@@ -166,7 +166,7 @@ class StandingsController extends Controller
         $st = new Standing();
 
         $byInst = [];
-        foreach ($st->eventResults($meetId) as $r) {
+        foreach ($st->eventResults($meetId, true) as $r) { // published only on the public live board
             $key = (int) $r['instance_id'];
             if (!isset($byInst[$key])) {
                 $byInst[$key] = [

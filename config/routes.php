@@ -23,8 +23,9 @@ $router->post('/forgot-password', 'AuthController@sendReset',  ['guest']);
 $router->get('/reset-password/{token}',  'AuthController@showReset',  ['guest']);
 $router->post('/reset-password',         'AuthController@resetPassword', ['guest']);
 
-// Public results (no login)
-$router->get('/public-results', 'PublicController@results');
+// Public results portal (no login): active meets → published prize winners
+$router->get('/public-results', 'PublicController@meets');
+$router->get('/public-results/{meetId}', 'PublicController@meetResults');
 
 // ---------------------------------------------------------------------
 // Authenticated
@@ -115,6 +116,7 @@ $router->delete('/instances/{instanceId}/registrations/{regId}', 'RegistrationCo
 $router->get('/results',                        'ResultController@index',      ['auth']);
 $router->get('/results/{instanceId}/entry',     'ResultController@entry',      ['auth']);
 $router->post('/results/{instanceId}/save',     'ResultController@save',       ['auth']);
+$router->post('/results/{instanceId}/publish',  'ResultController@togglePublish', ['auth']);
 $router->get('/results/{instanceId}/export',    'ResultController@export',     ['auth']);
 $router->get('/results/{instanceId}/assign',    'ResultController@assignForm', ['auth']);
 $router->post('/results/{instanceId}/assign',   'ResultController@assign',     ['auth']);

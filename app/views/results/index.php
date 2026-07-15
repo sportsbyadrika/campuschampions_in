@@ -1,5 +1,5 @@
 <?php
-/** @var array $instances @var array $meets @var int $meetId @var bool $canEnter */
+/** @var array $instances @var array $meets @var int $meetId @var bool $canEnter @var bool $canPublish */
 ?>
 <div class="flex items-center gap-3">
     <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><i class="fa-solid fa-ranking-star"></i></span>
@@ -26,11 +26,13 @@
         <table class="data-table">
             <thead><tr>
                 <th>Instance</th><th>Event</th><th>Category</th><th>Meet</th><th>Date</th>
-                <th>Registered</th><th>Results</th><th class="text-right">Actions</th>
+                <th>Registered</th><th>Results</th>
+                <?php if ($canPublish): ?><th class="text-center">Publish</th><?php endif; ?>
+                <th class="text-right">Actions</th>
             </tr></thead>
             <tbody>
                 <?php if (empty($instances)): ?>
-                    <tr><td colspan="8" class="text-center py-10 text-slate-400">
+                    <tr><td colspan="<?= $canPublish ? 9 : 8 ?>" class="text-center py-10 text-slate-400">
                         <i class="fa-solid fa-inbox text-2xl mb-2 block"></i>
                         <?php if (\App\Core\Auth::role() === 'event_user'): ?>
                             You have no assigned events yet.
@@ -54,6 +56,16 @@
                                 <span class="text-xs text-slate-400">None</span>
                             <?php endif; ?>
                         </td>
+                        <?php if ($canPublish): $pub = (int) ($i['results_published'] ?? 0) === 1; ?>
+                        <td class="text-center">
+                            <button type="button" role="switch" aria-checked="<?= $pub ? 'true' : 'false' ?>"
+                                    class="pub-switch relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors <?= $pub ? 'bg-emerald-500' : 'bg-slate-300' ?>"
+                                    data-publish-url="<?= e(url('results/' . (int) $i['id'] . '/publish')) ?>"
+                                    title="<?= $pub ? 'Published — click to unpublish' : 'Unpublished — click to publish' ?>">
+                                <span class="pub-knob inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform <?= $pub ? 'translate-x-6' : 'translate-x-1' ?>"></span>
+                            </button>
+                        </td>
+                        <?php endif; ?>
                         <td class="text-right whitespace-nowrap">
                             <a href="<?= e(url('results/' . (int) $i['id'] . '/export')) ?>" class="text-slate-500 hover:text-primary px-2" title="Export CSV"><i class="fa-solid fa-file-csv"></i></a>
                             <?php if (can('super_admin', 'campus_admin')): ?>
@@ -70,3 +82,32 @@
     </div>
 </div>
 <style>.btn-sm{padding:.35rem .7rem;font-size:.8rem}</style>
+<?php if ($canPublish): ?>
+<script>
+(function () {
+    document.querySelectorAll('.pub-switch').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            var on = btn.getAttribute('aria-checked') === 'true';
+            var next = on ? 0 : 1;
+            btn.disabled = true;
+            var fd = new FormData(); fd.append('published', String(next));
+            try {
+                var res = await window.apiFetch(btn.dataset.publishUrl, { method: 'POST', body: fd });
+                var pub = !!res.published;
+                btn.setAttribute('aria-checked', pub ? 'true' : 'false');
+                btn.classList.toggle('bg-emerald-500', pub);
+                btn.classList.toggle('bg-slate-300', !pub);
+                var knob = btn.querySelector('.pub-knob');
+                knob.classList.toggle('translate-x-6', pub);
+                knob.classList.toggle('translate-x-1', !pub);
+                btn.title = pub ? 'Published — click to unpublish' : 'Unpublished — click to publish';
+                window.Toast.show(res.message || 'Saved.', 'success');
+            } catch (err) {
+                window.Toast.show(err.message || 'Failed to update.', 'error');
+            }
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+<?php endif; ?>

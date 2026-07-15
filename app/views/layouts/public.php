@@ -14,11 +14,11 @@
 <body class="h-full bg-slate-50 text-slate-800">
 <header class="bg-white border-b border-slate-200 print:hidden">
     <div class="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-        <a href="<?= e(url('public-results')) ?>" class="flex items-center gap-2">
+        <a href="<?= e(url('')) ?>" class="flex items-center gap-2">
             <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"><i class="fa-solid fa-trophy"></i></span>
             <span class="text-lg font-bold text-slate-900">Campus Champions</span>
         </a>
-        <a href="<?= e(url('login')) ?>" class="text-sm font-medium text-primary hover:underline">Staff Login <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i></a>
+        <a href="<?= e(url('public-results')) ?>" class="text-sm font-medium text-primary hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Active Meets</a>
     </div>
 </header>
 
@@ -26,9 +26,7 @@
     <?= $content ?>
 </main>
 
-<footer class="mt-16 border-t border-slate-200 py-6 text-center text-sm text-slate-500 print:hidden">
-    &copy; <?= date('Y') ?> Campus Champions
-</footer>
+<?php include APP_PATH . '/views/partials/brand_footer.php'; ?>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
 </body>
 </html>

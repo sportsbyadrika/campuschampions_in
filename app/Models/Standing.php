@@ -42,8 +42,9 @@ class Standing
      * with each contestant's house and course/division. Ordered by instance
      * then position. Group by instance_id in the controller.
      */
-    public function eventResults(int $meetId): array
+    public function eventResults(int $meetId, bool $publishedOnly = false): array
     {
+        $publishSql = $publishedOnly ? ' AND ei.results_published = 1' : '';
         return $this->db->fetchAll(
             "SELECT ei.id AS instance_id, ei.label AS instance_label,
                     d.name AS discipline_name, e.name AS event_name, c.name AS category_name,
@@ -59,7 +60,7 @@ class Standing
              LEFT JOIN houses h ON h.id = cm.house_id
              LEFT JOIN courses co ON co.id = cm.course_id
              LEFT JOIN divisions dv ON dv.id = cm.division_id
-             WHERE d.meet_id = ? AND r.position IN ('first','second','third')
+             WHERE d.meet_id = ? AND r.position IN ('first','second','third')" . $publishSql . "
              ORDER BY d.name, ei.label,
                       CASE r.position WHEN 'first' THEN 1 WHEN 'second' THEN 2 WHEN 'third' THEN 3 ELSE 4 END,
                       cm.name",

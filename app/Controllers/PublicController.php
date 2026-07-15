@@ -7,87 +7,88 @@ namespace App\Controllers;
 use App\Core\Cache;
 use App\Core\Controller;
 use App\Core\Database;
-use App\Core\Request;
+use App\Models\Standing;
 
 /**
- * Public results page (no login required), with light caching.
+ * Public results portal (no login required), with light caching.
+ * Landing shows active meets that have published results; selecting a meet
+ * shows its published prize winners in the same layout as the live display.
  */
 class PublicController extends Controller
 {
-    private const PER_PAGE = 20;
-
-    public function results(): void
+    /** Active meets that have at least one published prize result. */
+    public function meets(): void
     {
         $db = Database::instance();
+        $meets = Cache::remember('public_active_meets', 120, fn() => $db->fetchAll(
+            "SELECT m.id, m.title, m.start_date, m.end_date, m.location,
+                    m.banner_path, m.logo_path, inst.name AS institution_name
+             FROM meet_masters m
+             JOIN institutions inst ON inst.id = m.campus_id
+             WHERE m.status = 'active'
+               AND EXISTS (
+                   SELECT 1 FROM event_instances ei
+                   JOIN event_masters e ON e.id = ei.event_id
+                   JOIN discipline_masters d ON d.id = e.discipline_id
+                   JOIN results r ON r.event_instance_id = ei.id
+                   WHERE d.meet_id = m.id AND ei.results_published = 1
+                     AND r.position IN ('first','second','third')
+               )
+             ORDER BY m.start_date DESC, m.title"
+        ));
 
-        $q        = trim((string) Request::get('q', ''));
-        $meetId   = (int) Request::get('meet_id', 0);
-        $catId    = (int) Request::get('category_id', 0);
-        $position = (string) Request::get('position', '');
-        $page     = max(1, (int) Request::get('page', 1));
+        $this->view('public/meets', [
+            'title' => 'Active Meets',
+            'meets' => $meets,
+        ], 'layouts/public');
+    }
 
-        // Cached filter option lists (5 min)
-        $meets = Cache::remember('public_meets', 300, fn() =>
-            $db->fetchAll("SELECT id, title FROM meet_masters ORDER BY start_date DESC, title"));
-        $categories = Cache::remember('public_categories', 300, fn() =>
-            $db->fetchAll("SELECT DISTINCT c.id, c.name FROM categories c JOIN event_instances ei ON ei.category_id = c.id JOIN results r ON r.event_instance_id = ei.id ORDER BY c.name"));
+    /** Published prize winners for a single meet, grouped by event instance. */
+    public function meetResults(string $meetId): void
+    {
+        $meetId = (int) $meetId;
+        $db = Database::instance();
 
-        // Build the filtered query
-        $where = [];
-        $params = [];
-        if ($q !== '') {
-            $where[] = '(cm.name LIKE ? OR cm.unique_number LIKE ? OR e.name LIKE ?)';
-            $like = '%' . $q . '%';
-            array_push($params, $like, $like, $like);
+        $meet = $db->fetch(
+            "SELECT m.id, m.title, m.start_date, m.end_date, m.location, m.status,
+                    m.logo_path, m.banner_path, inst.name AS institution_name
+             FROM meet_masters m
+             JOIN institutions inst ON inst.id = m.campus_id
+             WHERE m.id = ? AND m.status = 'active'",
+            [$meetId]
+        );
+        if (!$meet) {
+            $this->abort(404, 'Meet not found.');
         }
-        if ($meetId > 0) { $where[] = 'm.id = ?'; $params[] = $meetId; }
-        if ($catId > 0)  { $where[] = 'c.id = ?'; $params[] = $catId; }
-        if (in_array($position, ['first', 'second', 'third', 'participant'], true)) {
-            $where[] = 'r.position = ?'; $params[] = $position;
-        }
-        $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $from = "FROM results r
-                 JOIN contestant_masters cm ON cm.id = r.contestant_id
-                 JOIN institutions inst ON inst.id = cm.campus_id
-                 JOIN event_instances ei ON ei.id = r.event_instance_id
-                 JOIN event_masters e ON e.id = ei.event_id
-                 JOIN discipline_masters d ON d.id = e.discipline_id
-                 JOIN categories c ON c.id = ei.category_id
-                 JOIN meet_masters m ON m.id = d.meet_id
-                 $whereSql";
-
-        // Cache the full result set for this query (60s)
-        $cacheKey = 'public_results:' . md5($whereSql . '|' . implode(',', $params) . '|' . $page);
-        $payload = Cache::remember($cacheKey, 60, function () use ($db, $from, $params, $page) {
-            $total = (int) $db->scalar("SELECT COUNT(*) $from", $params);
-            $pages = max(1, (int) ceil($total / self::PER_PAGE));
-            $page  = min($page, $pages);
-            $offset = ($page - 1) * self::PER_PAGE;
-            $rows = $db->fetchAll(
-                "SELECT r.position, cm.name AS contestant_name, cm.unique_number,
-                        inst.name AS institution_name, e.name AS event_name,
-                        d.name AS discipline_name, c.name AS category_name, m.title AS meet_title
-                 $from
-                 ORDER BY m.start_date DESC, FIELD(r.position,'first','second','third','participant'), cm.name
-                 LIMIT " . self::PER_PAGE . " OFFSET $offset",
-                $params
-            );
-            return ['rows' => $rows, 'total' => $total, 'pages' => $pages, 'page' => $page];
+        $events = Cache::remember('public_meet_results:' . $meetId, 60, function () use ($meetId) {
+            $byInst = [];
+            foreach ((new Standing())->eventResults($meetId, true) as $r) {
+                $key = (int) $r['instance_id'];
+                if (!isset($byInst[$key])) {
+                    $byInst[$key] = [
+                        'label' => $r['instance_label'],
+                        'sub'   => $r['discipline_name'] . ' · ' . $r['event_name'] . ' · ' . $r['category_name'],
+                        'first' => [], 'second' => [], 'third' => [],
+                    ];
+                }
+                $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
+                $meta = array_filter([$r['house_name'] ?? '', $cls]);
+                if (isset($byInst[$key][$r['position']])) {
+                    $byInst[$key][$r['position']][] = [
+                        'name' => $r['contestant_name'],
+                        'unique' => $r['unique_number'],
+                        'meta' => implode(' · ', $meta),
+                    ];
+                }
+            }
+            return array_values($byInst);
         });
 
-        $this->view('public/results', [
-            'title'      => 'Public Results',
-            'rows'       => $payload['rows'],
-            'total'      => $payload['total'],
-            'pages'      => $payload['pages'],
-            'page'       => $payload['page'],
-            'meets'      => $meets,
-            'categories' => $categories,
-            'q'          => $q,
-            'meetId'     => $meetId,
-            'catId'      => $catId,
-            'position'   => $position,
+        $this->view('public/meet_results', [
+            'title'  => $meet['title'] . ' — Results',
+            'meet'   => $meet,
+            'events' => $events,
         ], 'layouts/public');
     }
 }

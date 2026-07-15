@@ -247,6 +247,7 @@ CREATE TABLE IF NOT EXISTS `event_instances` (
     `instance_time` TIME DEFAULT NULL,
     `venue`         VARCHAR(200) DEFAULT NULL,
     `status`        ENUM('scheduled','ongoing','completed','cancelled') NOT NULL DEFAULT 'scheduled',
+    `results_published` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),

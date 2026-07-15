@@ -11,6 +11,9 @@ class HomeController extends Controller
 {
     public function index(): void
     {
-        $this->redirect(Auth::check() ? '/dashboard' : '/login');
+        $this->view('home/index', [
+            'title'      => 'Welcome',
+            'isLoggedIn' => Auth::check(),
+        ], null);
     }
 }

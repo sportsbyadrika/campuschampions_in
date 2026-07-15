@@ -1,4 +1,4 @@
-<h1 class="text-xl font-bold text-slate-900">Welcome back</h1>
+<h1 class="text-xl font-bold text-slate-900">Institution Login</h1>
 <p class="mt-1 text-sm text-slate-500">Sign in to your account to continue.</p>
 
 <form method="post" action="<?= e(url('login')) ?>" class="mt-6 space-y-4" novalidate>

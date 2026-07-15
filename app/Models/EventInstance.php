@@ -10,7 +10,7 @@ class EventInstance extends Model
 {
     protected string $table = 'event_instances';
     protected bool $campusScoped = false;
-    protected array $fillable = ['event_id', 'category_id', 'label', 'instance_date', 'instance_time', 'venue', 'status'];
+    protected array $fillable = ['event_id', 'category_id', 'label', 'instance_date', 'instance_time', 'venue', 'status', 'results_published'];
 
     /** Instances for a meet with resolved event/discipline/category names. */
     public function forMeet(int $meetId): array

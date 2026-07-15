@@ -70,7 +70,7 @@ class ResultController extends Controller
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
         $instances = Database::instance()->fetchAll(
-            "SELECT ei.id, ei.label, ei.instance_date, ei.status,
+            "SELECT ei.id, ei.label, ei.instance_date, ei.status, ei.results_published,
                     e.name AS event_name, d.name AS discipline_name, c.name AS category_name,
                     m.id AS meet_id, m.title AS meet_title,
                     (SELECT COUNT(*) FROM contestant_registrations r WHERE r.event_instance_id = ei.id) AS reg_count,
@@ -86,11 +86,29 @@ class ResultController extends Controller
         );
 
         $this->view('results/index', [
-            'title'     => 'Results',
-            'instances' => $instances,
-            'meets'     => (new MeetMaster())->options(),
-            'meetId'    => $meetId,
-            'canEnter'  => Auth::is('super_admin', 'campus_admin', 'event_user'),
+            'title'      => 'Results',
+            'instances'  => $instances,
+            'meets'      => (new MeetMaster())->options(),
+            'meetId'     => $meetId,
+            'canEnter'   => Auth::is('super_admin', 'campus_admin', 'event_user'),
+            'canPublish' => Auth::is('super_admin', 'campus_admin', 'event_user'),
+        ]);
+    }
+
+    /** Toggle whether an instance's results are published (public-visible). */
+    public function togglePublish(string $instanceId): void
+    {
+        $instanceId = (int) $instanceId;
+        $instance = $this->instanceForEntry($instanceId); // authorize + campus + assignment checks
+        $publish = (int) Request::input('published', 0) === 1 ? 1 : 0;
+
+        (new EventInstance())->update($instanceId, ['results_published' => $publish]);
+        \App\Core\Cache::flush(); // public surfaces read the published flag
+        Audit::log('publish_results', 'event_instances', $instanceId, null, ['results_published' => $publish]);
+        $this->json([
+            'success'   => true,
+            'published' => $publish === 1,
+            'message'   => $publish ? 'Results published.' : 'Results unpublished.',
         ]);
     }
 
