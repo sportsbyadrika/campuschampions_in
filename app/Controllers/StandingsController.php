@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Csv;
 use App\Core\Request;
@@ -13,25 +12,49 @@ use App\Models\Standing;
 
 class StandingsController extends Controller
 {
+    private const ROLES = ['super_admin', 'campus_admin', 'event_user', 'campus_staff'];
+
+    private function posLabel(string $p): string
+    {
+        return ['first' => '1st', 'second' => '2nd', 'third' => '3rd'][$p] ?? $p;
+    }
+
     public function index(): void
     {
-        $this->authorize('super_admin', 'campus_admin', 'event_user', 'campus_staff');
+        $this->authorize(...self::ROLES);
 
         $meets = (new MeetMaster())->options();
         $meetId = (int) Request::get('meet_id', 0);
 
         $houses = [];
-        $individuals = [];
+        $events = [];
+        $disciplines = [];
         $meet = null;
 
         if ($meetId > 0) {
-            $meet = (new MeetMaster())->find($meetId); // campus-scoped ownership
+            $meet = (new MeetMaster())->find($meetId); // campus-scoped
             if (!$meet) {
                 $this->abort(404, 'Meet not found.');
             }
             $standing = new Standing();
             $houses = $standing->houses($meetId);
-            $individuals = $standing->individuals($meetId, 50);
+            $disciplines = $standing->disciplines($meetId);
+
+            // Group prize winners by event instance
+            foreach ($standing->eventResults($meetId) as $r) {
+                $key = (int) $r['instance_id'];
+                if (!isset($events[$key])) {
+                    $events[$key] = [
+                        'label'      => $r['instance_label'],
+                        'discipline' => $r['discipline_name'],
+                        'event'      => $r['event_name'],
+                        'category'   => $r['category_name'],
+                        'winners'    => [],
+                    ];
+                }
+                $events[$key]['winners'][] = $r;
+            }
+            $events = array_values($events);
         }
 
         $this->view('standings/index', [
@@ -40,13 +63,14 @@ class StandingsController extends Controller
             'meetId'      => $meetId,
             'meet'        => $meet,
             'houses'      => $houses,
-            'individuals' => $individuals,
+            'events'      => $events,
+            'disciplines' => $disciplines,
         ]);
     }
 
     public function export(string $type): void
     {
-        $this->authorize('super_admin', 'campus_admin', 'event_user', 'campus_staff');
+        $this->authorize(...self::ROLES);
         $meetId = (int) Request::get('meet_id', 0);
         $meet = (new MeetMaster())->find($meetId);
         if (!$meet) {
@@ -55,12 +79,27 @@ class StandingsController extends Controller
         $standing = new Standing();
 
         if ($type === 'houses') {
-            $rows = array_map(fn($h) => [$h['name'], $h['total_points'], $h['result_count']], $standing->houses($meetId));
-            Csv::download('house_standings', ['House', 'Total Points', 'Results'], $rows);
+            $rows = array_map(fn($h) => [
+                $h['name'], (int) $h['golds'], (int) $h['silvers'], (int) $h['bronzes'],
+                rtrim(rtrim(number_format((float) $h['total_points'], 2), '0'), '.'),
+            ], $standing->houses($meetId));
+            Csv::download('house_standings', ['House', 'First', 'Second', 'Third', 'Total Points'], $rows);
         }
-        $rows = array_map(fn($i) => [
-            $i['unique_number'], $i['name'], $i['house_name'], $i['total_points'], $i['golds'], $i['silvers'], $i['bronzes'],
-        ], $standing->individuals($meetId, 500));
-        Csv::download('individual_standings', ['Unique #', 'Contestant', 'House', 'Total Points', 'Gold', 'Silver', 'Bronze'], $rows);
+
+        if ($type === 'disciplines') {
+            $rows = array_map(fn($d) => [
+                $d['discipline_name'], (int) $d['golds'], (int) $d['silvers'], (int) $d['bronzes'],
+                rtrim(rtrim(number_format((float) $d['total_points'], 2), '0'), '.'),
+            ], $standing->disciplines($meetId));
+            Csv::download('discipline_standings', ['Discipline', 'First', 'Second', 'Third', 'Total Points'], $rows);
+        }
+
+        // Prize winners by event instance
+        $rows = array_map(fn($r) => [
+            $r['discipline_name'], $r['instance_label'], $r['category_name'],
+            $this->posLabel($r['position']), $r['unique_number'], $r['contestant_name'],
+            $r['house_name'] ?? '', trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /'),
+        ], $standing->eventResults($meetId));
+        Csv::download('event_winners', ['Discipline', 'Event Instance', 'Category', 'Position', 'Unique #', 'Contestant', 'House', 'Course/Division'], $rows);
     }
 }
