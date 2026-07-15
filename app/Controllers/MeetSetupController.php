@@ -284,13 +284,30 @@ class MeetSetupController extends Controller
             }
         }
 
-        (new MeetMaster())->update($meetId, $data);
+        try {
+            (new MeetMaster())->update($meetId, $data);
+        } catch (\PDOException $e) {
+            // Most commonly the live-screen columns are missing because the
+            // database migration has not been applied yet. Surface a clear,
+            // actionable message instead of a generic 500.
+            $missingColumn = stripos($e->getMessage(), 'column') !== false;
+            error_log('saveLiveSettings failed: ' . $e->getMessage());
+            $this->json([
+                'success' => false,
+                'message' => $missingColumn
+                    ? 'Live-screen settings could not be saved: the database is missing the live-screen columns. Please apply migration 002_add_meet_live_settings.sql.'
+                    : 'Live-screen settings could not be saved due to a database error.',
+            ], 500);
+        }
         Audit::log('update', 'meet_masters', $meetId, null, $data);
 
+        $pathFor = fn(string $column) => !array_key_exists($column, $data)
+            ? (!empty($meet[$column]) ? asset($meet[$column]) : '')   // unchanged
+            : (!empty($data[$column]) ? asset($data[$column]) : '');   // updated or cleared
         $paths = [
-            'logo'             => !empty($data['logo_path']) ? asset($data['logo_path']) : (isset($data['logo_path']) ? '' : ($meet['logo_path'] ? asset($meet['logo_path']) : '')),
-            'banner'           => !empty($data['banner_path']) ? asset($data['banner_path']) : (isset($data['banner_path']) ? '' : ($meet['banner_path'] ? asset($meet['banner_path']) : '')),
-            'institution_logo' => !empty($data['institution_logo_path']) ? asset($data['institution_logo_path']) : (isset($data['institution_logo_path']) ? '' : ($meet['institution_logo_path'] ? asset($meet['institution_logo_path']) : '')),
+            'logo'             => $pathFor('logo_path'),
+            'banner'           => $pathFor('banner_path'),
+            'institution_logo' => $pathFor('institution_logo_path'),
         ];
         $this->json(['success' => true, 'message' => 'Live-screen settings saved.', 'paths' => $paths, 'winners_scroll_speed' => $data['winners_scroll_speed']]);
     }
