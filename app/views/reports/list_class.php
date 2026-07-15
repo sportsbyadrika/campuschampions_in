@@ -1,5 +1,6 @@
 <?php
-/** @var string $title @var array $meets @var ?array $meet @var array $groups */
+/** @var string $title @var array $meets @var ?array $meet @var array $groups @var string $routeBase */
+$routeBase = $routeBase ?? 'class-contestants';
 include APP_PATH . '/views/reports/_toolbar.php';
 if ($meet):
     $mid = (int) $meet['id'];
@@ -30,10 +31,10 @@ if ($meet):
                             <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700"><?= (int) $g['contestants'] ?></span>
                         </td>
                         <td class="text-right whitespace-nowrap print:hidden">
-                            <a href="<?= e(url('reports/class-contestants/print?' . $qs)) ?>" target="_blank" rel="noopener" class="btn btn-secondary btn-sm !inline-flex">
+                            <a href="<?= e(url('reports/' . $routeBase . '/print?' . $qs)) ?>" target="_blank" rel="noopener" class="btn btn-secondary btn-sm !inline-flex">
                                 <i class="fa-solid fa-print"></i> Print
                             </a>
-                            <a href="<?= e(url('reports/class-contestants/csv?' . $qs)) ?>" class="btn btn-secondary btn-sm !inline-flex">
+                            <a href="<?= e(url('reports/' . $routeBase . '/csv?' . $qs)) ?>" class="btn btn-secondary btn-sm !inline-flex">
                                 <i class="fa-solid fa-file-csv"></i> CSV
                             </a>
                         </td>

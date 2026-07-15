@@ -4,6 +4,7 @@ $cards = [
     ['url' => 'reports/course-house',         'icon' => 'fa-table-cells-large','title' => 'Course/Division × House',      'desc' => 'Contestant count per course/division, pivoted by house.'],
     ['url' => 'reports/instance-contestants', 'icon' => 'fa-list-check',       'title' => 'Instance Contestant List',     'desc' => 'Contestants registered per event instance (sorted by name).'],
     ['url' => 'reports/class-contestants',    'icon' => 'fa-users-rectangle',  'title' => 'Class/Division Contestants',   'desc' => 'Contestants by class/division with their event instances.'],
+    ['url' => 'reports/class-unique',         'icon' => 'fa-id-card',          'title' => 'Class/Division Unique List',   'desc' => 'Distinct students by admission number with participation counts.'],
 ];
 ?>
 <div class="flex items-center gap-3">

@@ -164,3 +164,7 @@ $router->get('/reports/class-contestants',        'ReportsController@classContes
 $router->get('/reports/class-contestants/print',  'ReportsController@classPrint',       ['auth']);
 $router->get('/reports/class-contestants/pdf',    'ReportsController@classPdf',         ['auth']);
 $router->get('/reports/class-contestants/csv',    'ReportsController@classCsv',         ['auth']);
+$router->get('/reports/class-unique',             'ReportsController@classUnique',      ['auth']);
+$router->get('/reports/class-unique/print',       'ReportsController@classUniquePrint', ['auth']);
+$router->get('/reports/class-unique/pdf',         'ReportsController@classUniquePdf',   ['auth']);
+$router->get('/reports/class-unique/csv',         'ReportsController@classUniqueCsv',   ['auth']);

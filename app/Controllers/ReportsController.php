@@ -440,21 +440,7 @@ class ReportsController extends Controller
 
         $groups = [];
         if ($meet) {
-            $groups = Database::instance()->fetchAll(
-                "SELECT cm.course_id, co.name AS course_name, cm.division_id, dv.name AS division_name,
-                        COUNT(DISTINCT cm.id) AS contestants
-                 FROM contestant_masters cm
-                 JOIN contestant_registrations r ON r.contestant_id = cm.id
-                 JOIN event_instances ei ON ei.id = r.event_instance_id
-                 JOIN event_masters e ON e.id = ei.event_id
-                 JOIN discipline_masters d ON d.id = e.discipline_id
-                 LEFT JOIN courses co ON co.id = cm.course_id
-                 LEFT JOIN divisions dv ON dv.id = cm.division_id
-                 WHERE d.meet_id = ?
-                 GROUP BY cm.course_id, cm.division_id
-                 ORDER BY co.name, dv.name",
-                [(int) $meet['id']]
-            );
+            $groups = $this->classGroups((int) $meet['id']);
             if ($this->wantsCsv()) {
                 $data = array_map(fn($g) => [$g['course_name'] ?? '—', $g['division_name'] ?? '—', (int) $g['contestants']], $groups);
                 Csv::download('class_division_summary', ['Course', 'Division', 'Contestants'], $data);
@@ -462,9 +448,157 @@ class ReportsController extends Controller
         }
 
         $this->view('reports/list_class', [
-            'title'  => 'Class / Division — Contestant List',
-            'meets'  => $meets, 'meet' => $meet, 'groups' => $groups,
+            'title'     => 'Class / Division — Contestant List',
+            'meets'     => $meets, 'meet' => $meet, 'groups' => $groups,
+            'routeBase' => 'class-contestants',
         ]);
+    }
+
+    /** Course/division groups that have participating contestants for a meet. */
+    private function classGroups(int $meetId): array
+    {
+        return Database::instance()->fetchAll(
+            "SELECT cm.course_id, co.name AS course_name, cm.division_id, dv.name AS division_name,
+                    COUNT(DISTINCT cm.id) AS contestants
+             FROM contestant_masters cm
+             JOIN contestant_registrations r ON r.contestant_id = cm.id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
+             WHERE d.meet_id = ?
+             GROUP BY cm.course_id, cm.division_id
+             ORDER BY co.name, dv.name",
+            [$meetId]
+        );
+    }
+
+    // ---- Class / Division — Unique List (distinct by admission number) ----
+
+    public function classUnique(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        $meet = $this->selectedMeet();
+        $meets = (new MeetMaster())->options();
+
+        $groups = [];
+        if ($meet) {
+            $groups = $this->classGroups((int) $meet['id']);
+            if ($this->wantsCsv()) {
+                $data = array_map(fn($g) => [$g['course_name'] ?? '—', $g['division_name'] ?? '—', (int) $g['contestants']], $groups);
+                Csv::download('class_division_unique_summary', ['Course', 'Division', 'Contestants'], $data);
+            }
+        }
+
+        $this->view('reports/list_class', [
+            'title'     => 'Class / Division — Unique List',
+            'meets'     => $meets, 'meet' => $meet, 'groups' => $groups,
+            'routeBase' => 'class-unique',
+        ]);
+    }
+
+    /**
+     * Build the $report structure for the unique-list report: one row per
+     * distinct admission number (name taken from the first matching row),
+     * with the count and list of distinct participating event instances.
+     */
+    private function classUniqueReportData(int $meetId, ?int $courseId, ?int $divisionId): array
+    {
+        $meet = (new MeetMaster())->find($meetId); // campus-scoped
+        if (!$meet) {
+            $this->abort(404, 'Meet not found.');
+        }
+        $db = Database::instance();
+        $institution = (string) $db->scalar("SELECT name FROM institutions WHERE id = ?", [(int) $meet['campus_id']]);
+        $courseName   = $courseId !== null ? (string) $db->scalar("SELECT name FROM courses WHERE id = ?", [$courseId]) : null;
+        $divisionName = $divisionId !== null ? (string) $db->scalar("SELECT name FROM divisions WHERE id = ?", [$divisionId]) : null;
+        $groupLabel = trim(($courseName ?: '—') . ' / ' . ($divisionName ?: '—'));
+
+        $params = [$meetId];
+        $cond = $courseId !== null ? ' AND cm.course_id = ?' : ' AND cm.course_id IS NULL';
+        if ($courseId !== null) { $params[] = $courseId; }
+        $cond .= $divisionId !== null ? ' AND cm.division_id = ?' : ' AND cm.division_id IS NULL';
+        if ($divisionId !== null) { $params[] = $divisionId; }
+
+        $flat = $db->fetchAll(
+            "SELECT cm.id, cm.admission_number, cm.name, cm.gender, ei.label AS instance_label
+             FROM contestant_masters cm
+             JOIN contestant_registrations r ON r.contestant_id = cm.id
+             JOIN event_instances ei ON ei.id = r.event_instance_id
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             WHERE d.meet_id = ? $cond
+             ORDER BY cm.name, ei.label",
+            $params
+        );
+
+        // Group by admission number (blank admission => the contestant is its own group)
+        $map = [];
+        foreach ($flat as $f) {
+            $adm = trim((string) $f['admission_number']);
+            $key = $adm !== '' ? 'adm:' . $adm : 'cm:' . (int) $f['id'];
+            if (!isset($map[$key])) {
+                $map[$key] = ['admission_number' => $adm, 'name' => $f['name'], 'gender' => $this->gender($f['gender']), 'instances' => []];
+            }
+            if (!in_array($f['instance_label'], $map[$key]['instances'], true)) {
+                $map[$key]['instances'][] = $f['instance_label']; // distinct instances
+            }
+        }
+        $rows = array_map(fn($m) => [
+            'admission_number' => $m['admission_number'] ?: '—',
+            'name'             => $m['name'],
+            'gender'           => $m['gender'],
+            'event_count'      => (string) count($m['instances']),
+            'instances'        => implode(', ', $m['instances']),
+        ], array_values($map));
+
+        $qs = 'meet_id=' . $meetId . '&course_id=' . ($courseId ?? 0) . '&division_id=' . ($divisionId ?? 0);
+        return [
+            'title'    => 'Class/Division Unique — ' . $groupLabel,
+            'main'     => $meet['title'],
+            'sub'      => $institution ?: '',
+            'line'     => 'Class / Division: <strong>' . e($groupLabel) . '</strong> · Unique List',
+            'pdfBase'  => url('reports/class-unique/pdf?' . $qs),
+            'filename' => 'class_unique_' . $meetId . '_' . ($courseId ?? 0) . '_' . ($divisionId ?? 0),
+            'columns'  => [
+                ['label' => 'Sl No', 'type' => 'sl'],
+                ['label' => 'Admission #', 'key' => 'admission_number', 'cls' => 'num'],
+                ['label' => 'Name', 'key' => 'name'],
+                ['label' => 'Gender', 'key' => 'gender', 'cls' => 'gen'],
+                ['label' => 'Events', 'key' => 'event_count', 'cls' => 'gen'],
+                ['label' => 'Participating Event Instances', 'key' => 'instances'],
+            ],
+            'rows'     => $rows,
+        ];
+    }
+
+    public function classUniquePrint(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $report = $this->classUniqueReportData($m, $c, $dv);
+        $this->view('reports/participants_print', ['report' => $report], null);
+    }
+
+    public function classUniquePdf(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $this->streamPdf($this->classUniqueReportData($m, $c, $dv));
+    }
+
+    public function classUniqueCsv(): void
+    {
+        $this->authorize(...self::REPORT_ROLES);
+        [$m, $c, $dv] = $this->classParams();
+        $report = $this->classUniqueReportData($m, $c, $dv);
+        $sl = 0;
+        $data = array_map(function ($r) use (&$sl) {
+            $sl++;
+            return [$sl, $r['admission_number'], $r['name'], $r['gender'], $r['event_count'], $r['instances']];
+        }, $report['rows']);
+        Csv::download($report['filename'], ['Sl No', 'Admission #', 'Name', 'Gender', 'Events', 'Participating Event Instances'], $data);
     }
 
     /** Parse meet_id / course_id / division_id from the query (0 or '' => null). */
@@ -502,7 +636,7 @@ class ReportsController extends Controller
         if ($divisionId !== null) { $params[] = $divisionId; }
 
         $flat = $db->fetchAll(
-            "SELECT cm.id, cm.unique_number, cm.name, cm.gender, ei.label AS instance_label
+            "SELECT cm.id, cm.unique_number, cm.admission_number, cm.name, cm.gender, ei.label AS instance_label
              FROM contestant_masters cm
              JOIN contestant_registrations r ON r.contestant_id = cm.id
              JOIN event_instances ei ON ei.id = r.event_instance_id
@@ -516,15 +650,16 @@ class ReportsController extends Controller
         foreach ($flat as $f) {
             $id = (int) $f['id'];
             if (!isset($map[$id])) {
-                $map[$id] = ['unique_number' => $f['unique_number'], 'name' => $f['name'], 'gender' => $this->gender($f['gender']), 'instances' => []];
+                $map[$id] = ['unique_number' => $f['unique_number'], 'admission_number' => $f['admission_number'], 'name' => $f['name'], 'gender' => $this->gender($f['gender']), 'instances' => []];
             }
             $map[$id]['instances'][] = $f['instance_label'];
         }
         $rows = array_map(fn($m) => [
-            'unique_number' => $m['unique_number'],
-            'name'          => $m['name'],
-            'gender'        => $m['gender'],
-            'instances'     => implode(', ', $m['instances']),
+            'unique_number'    => $m['unique_number'],
+            'admission_number' => $m['admission_number'] ?: '—',
+            'name'             => $m['name'],
+            'gender'           => $m['gender'],
+            'instances'        => implode(', ', $m['instances']),
         ], array_values($map));
 
         $qs = 'meet_id=' . $meetId . '&course_id=' . ($courseId ?? 0) . '&division_id=' . ($divisionId ?? 0);
@@ -538,6 +673,7 @@ class ReportsController extends Controller
             'columns'  => [
                 ['label' => 'Sl No', 'type' => 'sl'],
                 ['label' => 'Unique #', 'key' => 'unique_number', 'cls' => 'num'],
+                ['label' => 'Admission #', 'key' => 'admission_number', 'cls' => 'num'],
                 ['label' => 'Name', 'key' => 'name'],
                 ['label' => 'Gender', 'key' => 'gender', 'cls' => 'gen'],
                 ['label' => 'Participating Event Instances', 'key' => 'instances'],
@@ -570,9 +706,9 @@ class ReportsController extends Controller
         $sl = 0;
         $data = array_map(function ($r) use (&$sl) {
             $sl++;
-            return [$sl, $r['unique_number'], $r['name'], $r['gender'], $r['instances'], ''];
+            return [$sl, $r['unique_number'], $r['admission_number'], $r['name'], $r['gender'], $r['instances'], ''];
         }, $report['rows']);
-        Csv::download($report['filename'], ['Sl No', 'Unique #', 'Name', 'Gender', 'Participating Event Instances', 'Remarks'], $data);
+        Csv::download($report['filename'], ['Sl No', 'Unique #', 'Admission #', 'Name', 'Gender', 'Participating Event Instances', 'Remarks'], $data);
     }
 
     // ---- Printable / PDF for the pivot reports ----
