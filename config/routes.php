@@ -70,8 +70,9 @@ $router->get('/contestants/bulk',            'ContestantBulkController@form',   
 $router->get('/contestants/bulk/template',   'ContestantBulkController@template', ['auth']);
 $router->post('/contestants/bulk/preview',   'ContestantBulkController@preview',  ['auth']);
 $router->post('/contestants/bulk/import',    'ContestantBulkController@import',   ['auth']);
-$router->get('/contestants/bulk-edit',       'ContestantBulkEditController@form',   ['auth']);
-$router->post('/contestants/bulk-edit',      'ContestantBulkEditController@update', ['auth']);
+$router->get('/contestants/bulk-edit',           'ContestantBulkEditController@form',      ['auth']);
+$router->post('/contestants/bulk-edit',          'ContestantBulkEditController@update',    ['auth']);
+$router->post('/contestants/bulk-edit/row/{id}', 'ContestantBulkEditController@updateRow', ['auth']);
 
 $crud('contestants',             'ContestantController');
 $crud('meets',                   'MeetController');

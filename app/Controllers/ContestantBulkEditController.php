@@ -78,6 +78,69 @@ class ContestantBulkEditController extends Controller
         ]);
     }
 
+    /** Campus-scoped allowed id sets for FK fields (prevents cross-campus injection). */
+    private function allowedSets(): array
+    {
+        return [
+            'course'   => $this->opts(new Course()),
+            'division' => $this->opts(new Division()),
+            'house'    => $this->opts(new House()),
+            'group'    => $this->opts(new CourseCategoryGroup()),
+        ];
+    }
+
+    /** Build a validated update payload from a row's fields, or null if the name is blank. */
+    private function buildRowData(array $f, array $allowed): ?array
+    {
+        $name = trim((string) ($f['name'] ?? ''));
+        if ($name === '') {
+            return null;
+        }
+        $gender = strtoupper(trim((string) ($f['gender'] ?? '')));
+        $pick = fn($v, array $a) => ($v !== '' && $v !== null && isset($a[(int) $v])) ? (int) $v : null;
+        return [
+            'admission_number'         => trim((string) ($f['admission_number'] ?? '')) ?: null,
+            'name'                     => $name,
+            'gender'                   => in_array($gender, ['M', 'F', 'O'], true) ? $gender : null,
+            'house_id'                 => $pick($f['house_id'] ?? null, $allowed['house']),
+            'course_category_group_id' => $pick($f['course_category_group_id'] ?? null, $allowed['group']),
+            'course_id'                => $pick($f['course_id'] ?? null, $allowed['course']),
+            'division_id'              => $pick($f['division_id'] ?? null, $allowed['division']),
+        ];
+    }
+
+    /** AJAX: save a single contestant row. */
+    public function updateRow(string $id): void
+    {
+        $this->guard();
+        $cid = (int) $id;
+
+        // Campus-scoped find -> null for other campuses (rejects cross-campus edits)
+        $existing = (new ContestantMaster())->find($cid);
+        if (!$existing) {
+            $this->json(['success' => false, 'message' => 'Contestant not found.'], 404);
+        }
+
+        $f = [
+            'name'             => Request::input('name'),
+            'admission_number' => Request::input('admission_number'),
+            'gender'           => Request::input('gender'),
+            'house_id'         => Request::input('house_id'),
+            'course_category_group_id' => Request::input('course_category_group_id'),
+            'course_id'        => Request::input('course_id'),
+            'division_id'      => Request::input('division_id'),
+        ];
+        $data = $this->buildRowData($f, $this->allowedSets());
+        if ($data === null) {
+            $this->json(['success' => false, 'errors' => ['name' => 'Name is required.'], 'message' => 'Name is required.'], 422);
+        }
+
+        (new ContestantMaster())->update($cid, $data);
+        Audit::log('update', 'contestant_masters', $cid, $existing, $data);
+        $this->json(['success' => true, 'message' => 'Saved.']);
+    }
+
+    /** Non-AJAX fallback: save all rows in one request. */
     public function update(): void
     {
         $this->guard();
@@ -91,35 +154,18 @@ class ContestantBulkEditController extends Controller
             $this->redirect('/contestants/bulk-edit?course_id=' . $courseId . '&division_id=' . $divisionId);
         }
 
-        // Allowed id sets (campus-scoped) to prevent cross-campus injection
-        $allowedCourses   = $this->opts(new Course());
-        $allowedDivisions = $this->opts(new Division());
-        $allowedHouses    = $this->opts(new House());
-        $allowedGroups    = $this->opts(new CourseCategoryGroup());
-        $pick = fn($v, array $allowed) => ($v !== '' && $v !== null && isset($allowed[(int) $v])) ? (int) $v : null;
-
+        $allowed = $this->allowedSets();
         $model = new ContestantMaster();
         $updated = 0;
         $skipped = 0;
 
         foreach ($rows as $cid => $f) {
-            $cid = (int) $cid;
-            $name = trim((string) ($f['name'] ?? ''));
-            if ($name === '') { // never blank out the name
+            $data = $this->buildRowData(is_array($f) ? $f : [], $allowed);
+            if ($data === null) {
                 $skipped++;
                 continue;
             }
-            $gender = strtoupper(trim((string) ($f['gender'] ?? '')));
-            $data = [
-                'admission_number'         => trim((string) ($f['admission_number'] ?? '')) ?: null,
-                'name'                     => $name,
-                'gender'                   => in_array($gender, ['M', 'F', 'O'], true) ? $gender : null,
-                'house_id'                 => $pick($f['house_id'] ?? null, $allowedHouses),
-                'course_category_group_id' => $pick($f['course_category_group_id'] ?? null, $allowedGroups),
-                'course_id'                => $pick($f['course_id'] ?? null, $allowedCourses),
-                'division_id'              => $pick($f['division_id'] ?? null, $allowedDivisions),
-            ];
-            $model->update($cid, $data); // campus-scoped in the model
+            $model->update((int) $cid, $data); // campus-scoped in the model
             $updated++;
         }
 
@@ -129,7 +175,6 @@ class ContestantBulkEditController extends Controller
             $msg .= " Skipped {$skipped} row(s) with a blank name.";
         }
         Flash::success($msg);
-        // Return to the same course/division view
         $this->redirect('/contestants/bulk-edit?course_id=' . $courseId . '&division_id=' . $divisionId);
     }
 }
