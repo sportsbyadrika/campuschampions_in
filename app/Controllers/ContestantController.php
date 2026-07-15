@@ -55,7 +55,8 @@ class ContestantController extends CrudController
             'showCampus'   => true,
             'formColumns'  => 3,
             'extraActions' => [
-                // Bulk upload stays restricted to admins
+                // Bulk upload/edit stay restricted to admins
+                ['label' => 'Bulk Edit', 'url' => 'contestants/bulk-edit', 'icon' => 'fa-table-list', 'roles' => ['super_admin', 'campus_admin']],
                 ['label' => 'Bulk Upload', 'url' => 'contestants/bulk', 'icon' => 'fa-file-arrow-up', 'roles' => ['super_admin', 'campus_admin']],
             ],
             'columns' => [
