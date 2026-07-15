@@ -121,6 +121,9 @@ $router->delete('/results/{instanceId}/assign/{assignmentId}', 'ResultController
 // ---------------------------------------------------------------------
 $router->get('/standings',                'StandingsController@index',  ['auth']);
 $router->get('/standings/export/{type}',  'StandingsController@export', ['auth']);
+// Live big-screen dashboard (public, so a TV display is not affected by session timeout)
+$router->get('/standings/live/{meetId}',      'StandingsController@live');
+$router->get('/standings/live-data/{meetId}', 'StandingsController@liveData');
 
 // ---------------------------------------------------------------------
 // Certificates

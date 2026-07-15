@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Csv;
+use App\Core\Database;
 use App\Core\Request;
 use App\Models\MeetMaster;
 use App\Models\Standing;
@@ -73,6 +74,85 @@ class StandingsController extends Controller
             'disciplines'     => $disciplines,
             'courseDivisions' => $courseDivisions,
         ]);
+    }
+
+    // ------------------------------------------------------------------
+    // Live big-screen dashboard (public — meant to run on a TV for hours,
+    // so it must not be subject to the login session timeout).
+    // ------------------------------------------------------------------
+
+    /** Fetch a meet directly (no campus scope) so the public display works. */
+    private function publicMeet(int $meetId): array
+    {
+        $meet = Database::instance()->fetch("SELECT * FROM meet_masters WHERE id = ?", [$meetId]);
+        if (!$meet) {
+            $this->abort(404, 'Meet not found.');
+        }
+        return $meet;
+    }
+
+    public function live(string $meetId): void
+    {
+        $meet = $this->publicMeet((int) $meetId);
+        $institution = (string) Database::instance()->scalar(
+            "SELECT name FROM institutions WHERE id = ?",
+            [(int) $meet['campus_id']]
+        );
+        $this->view('standings/live', [
+            'meetId'      => (int) $meetId,
+            'meetTitle'   => $meet['title'],
+            'institution' => $institution ?: '',
+        ], null);
+    }
+
+    /** JSON data for the live dashboard (polled every minute). */
+    public function liveData(string $meetId): void
+    {
+        $this->json($this->livePayload((int) $meetId));
+    }
+
+    /** Build the live dashboard payload (separated for testability). */
+    private function livePayload(int $meetId): array
+    {
+        $meet = $this->publicMeet($meetId);
+        $institution = (string) Database::instance()->scalar(
+            "SELECT name FROM institutions WHERE id = ?",
+            [(int) $meet['campus_id']]
+        );
+        $st = new Standing();
+
+        $byInst = [];
+        foreach ($st->eventResults($meetId) as $r) {
+            $key = (int) $r['instance_id'];
+            if (!isset($byInst[$key])) {
+                $byInst[$key] = [
+                    'label'  => $r['instance_label'],
+                    'sub'    => $r['discipline_name'] . ' · ' . $r['event_name'] . ' · ' . $r['category_name'],
+                    'first'  => [], 'second' => [], 'third' => [],
+                ];
+            }
+            $cls = trim(($r['course_name'] ?? '') . ' / ' . ($r['division_name'] ?? ''), ' /');
+            $meta = array_filter([$r['house_name'] ?? '', $cls]);
+            if (isset($byInst[$key][$r['position']])) {
+                $byInst[$key][$r['position']][] = ['name' => $r['contestant_name'], 'meta' => implode(' · ', $meta)];
+            }
+        }
+
+        return [
+            'meet'        => ['title' => $meet['title']],
+            'institution' => $institution ?: '',
+            'houses'      => array_map(fn($h) => [
+                'name' => $h['name'], 'color' => $h['color_code'] ?: '#2563EB',
+                'points' => (float) $h['total_points'], 'golds' => (int) $h['golds'],
+                'silvers' => (int) $h['silvers'], 'bronzes' => (int) $h['bronzes'],
+            ], $st->houses($meetId)),
+            'courseDivisions' => array_map(fn($c) => [
+                'label' => trim(($c['course_name'] ?? '—') . ' / ' . ($c['division_name'] ?? '—'), ' /'),
+                'golds' => (int) $c['golds'], 'silvers' => (int) $c['silvers'],
+                'bronzes' => (int) $c['bronzes'], 'points' => (float) $c['total_points'],
+            ], $st->courseDivisions($meetId)),
+            'events'      => array_values($byInst),
+        ];
     }
 
     public function export(string $type): void

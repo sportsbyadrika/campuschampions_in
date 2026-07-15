@@ -31,17 +31,24 @@ $winnerCell = function (array $list) use ($classOf) {
             <p class="text-sm text-slate-500">House points, prize winners and discipline breakdown.</p>
         </div>
     </div>
-    <form method="get" class="flex items-end gap-2">
-        <div>
-            <label class="form-label">Meet</label>
-            <select name="meet_id" class="form-select" onchange="this.form.submit()">
-                <option value="">— Select meet —</option>
-                <?php foreach ($meets as $m): ?>
-                    <option value="<?= (int) $m['id'] ?>" <?= $meetId === (int) $m['id'] ? 'selected' : '' ?>><?= e($m['name']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-    </form>
+    <div class="flex items-end gap-2">
+        <form method="get" class="flex items-end gap-2">
+            <div>
+                <label class="form-label">Meet</label>
+                <select name="meet_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">— Select meet —</option>
+                    <?php foreach ($meets as $m): ?>
+                        <option value="<?= (int) $m['id'] ?>" <?= $meetId === (int) $m['id'] ? 'selected' : '' ?>><?= e($m['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </form>
+        <?php if ($meetId): ?>
+            <a href="<?= e(url('standings/live/' . $meetId)) ?>" target="_blank" rel="noopener" class="btn btn-primary" title="Open full-screen live board on an extended display">
+                <i class="fa-solid fa-tv"></i> Live Screen
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php if (!$meetId): ?>
