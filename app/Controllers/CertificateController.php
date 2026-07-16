@@ -40,11 +40,27 @@ class CertificateController extends Controller
     {
         $this->authorize('super_admin', 'campus_admin', 'event_user');
         $meetId = (int) Request::get('meet_id', 0);
+        $instanceId = (int) Request::get('instance_id', 0);
 
         $where = [];
         $params = [];
         if (Auth::campusId() !== null) { $where[] = 'm.campus_id = ?'; $params[] = Auth::campusId(); }
         if ($meetId > 0) { $where[] = 'm.id = ?'; $params[] = $meetId; }
+
+        // Searchable event-instance dropdown options (campus + meet scope), alphabetical.
+        $optWhereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+        $instanceChoices = Database::instance()->fetchAll(
+            "SELECT ei.id, ei.label
+             FROM event_instances ei
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             JOIN meet_masters m ON m.id = d.meet_id
+             $optWhereSql
+             ORDER BY ei.label ASC",
+            $params
+        );
+
+        if ($instanceId > 0) { $where[] = 'ei.id = ?'; $params[] = $instanceId; }
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
         $instances = Database::instance()->fetchAll(
@@ -63,10 +79,12 @@ class CertificateController extends Controller
         );
 
         $this->view('certificates/index', [
-            'title'     => 'Certificates',
-            'instances' => $instances,
-            'meets'     => (new MeetMaster())->options(),
-            'meetId'    => $meetId,
+            'title'           => 'Certificates',
+            'instances'       => $instances,
+            'meets'           => (new MeetMaster())->options(),
+            'meetId'          => $meetId,
+            'instanceChoices' => $instanceChoices,
+            'instanceId'      => $instanceId,
         ]);
     }
 
