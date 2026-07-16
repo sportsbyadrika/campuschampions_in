@@ -104,7 +104,7 @@ class ResultController extends Controller
              JOIN categories c ON c.id = ei.category_id
              JOIN meet_masters m ON m.id = d.meet_id
              $whereSql
-             ORDER BY ei.instance_date DESC, m.title, e.name",
+             ORDER BY ei.label ASC",
             $params
         );
 
