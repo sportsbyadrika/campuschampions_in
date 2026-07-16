@@ -1,6 +1,7 @@
 <?php
 /** @var array $instance @var array $registrations @var array $existing @var array $points @var array $positions */
 $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participant' => 'Participant'];
+$genderLabels = ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'];
 ?>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div class="flex items-center gap-3">
@@ -47,7 +48,8 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
         <div class="overflow-x-auto">
             <table class="data-table" id="resultTable">
                 <thead><tr>
-                    <th>Unique #</th><th>Admission #</th><th>Contestant</th><th>House</th>
+                    <th>Unique #</th><th>Admission #</th><th>Contestant</th>
+                    <th>Course</th><th>Division</th><th>Gender</th><th>House</th>
                     <th class="w-40">Position</th><th class="w-28">Points</th><th>Remarks</th>
                 </tr></thead>
                 <tbody>
@@ -63,6 +65,9 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         <td><?= e($r['unique_number']) ?></td>
                         <td><?= e($r['admission_number'] ?? '') ?></td>
                         <td class="font-medium"><?= e($r['contestant_name']) ?></td>
+                        <td><?= e($r['course_name'] ?? '') ?: '—' ?></td>
+                        <td><?= e($r['division_name'] ?? '') ?: '—' ?></td>
+                        <td><?= e($genderLabels[$r['gender'] ?? ''] ?? '—') ?></td>
                         <td><?= e($r['house_name'] ?? '') ?></td>
                         <td>
                             <select name="rows[<?= $cid ?>][position]" class="form-select !py-1.5 result-pos">
@@ -80,7 +85,7 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         </td>
                     </tr>
                     <?php endforeach; ?>
-                    <tr id="noMatchRow" class="hidden"><td colspan="7" class="text-center py-8 text-slate-400">No matching contestants.</td></tr>
+                    <tr id="noMatchRow" class="hidden"><td colspan="10" class="text-center py-8 text-slate-400">No matching contestants.</td></tr>
                 </tbody>
             </table>
         </div>

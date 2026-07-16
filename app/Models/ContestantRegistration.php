@@ -16,10 +16,13 @@ class ContestantRegistration extends Model
     public function forInstance(int $instanceId): array
     {
         return $this->db->fetchAll(
-            "SELECT r.*, cm.name AS contestant_name, cm.unique_number, cm.admission_number, h.name AS house_name
+            "SELECT r.*, cm.name AS contestant_name, cm.unique_number, cm.admission_number, cm.gender,
+                    h.name AS house_name, co.name AS course_name, dv.name AS division_name
              FROM contestant_registrations r
              JOIN contestant_masters cm ON cm.id = r.contestant_id
              LEFT JOIN houses h ON h.id = cm.house_id
+             LEFT JOIN courses co ON co.id = cm.course_id
+             LEFT JOIN divisions dv ON dv.id = cm.division_id
              WHERE r.event_instance_id = ?
              ORDER BY cm.name",
             [$instanceId]
