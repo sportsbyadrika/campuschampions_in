@@ -12,12 +12,24 @@ $genderLabels = ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'];
             <p class="text-sm text-slate-500"><?= e($instance['discipline_name']) ?> · <?= e($instance['event_name']) ?> · <?= e($instance['category_name']) ?></p>
         </div>
     </div>
-    <?php if (!empty($existing)): ?>
-        <form method="post" action="<?= e(url('results/' . (int) $instance['id'] . '/clear')) ?>" onsubmit="return confirm('Delete ALL entered results for this event? This cannot be undone.');">
-            <?= csrf_field() ?>
-            <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete All Results</button>
-        </form>
-    <?php endif; ?>
+    <div class="flex items-center gap-4">
+        <?php $pub = (int) ($instance['results_published'] ?? 0) === 1; ?>
+        <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-slate-600">Published</span>
+            <button type="button" role="switch" aria-checked="<?= $pub ? 'true' : 'false' ?>"
+                    class="pub-switch relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors <?= $pub ? 'bg-emerald-500' : 'bg-slate-300' ?>"
+                    data-publish-url="<?= e(url('results/' . (int) $instance['id'] . '/publish')) ?>"
+                    title="<?= $pub ? 'Published — click to unpublish' : 'Unpublished — click to publish' ?>">
+                <span class="pub-knob inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform <?= $pub ? 'translate-x-6' : 'translate-x-1' ?>"></span>
+            </button>
+        </div>
+        <?php if (!empty($existing)): ?>
+            <form method="post" action="<?= e(url('results/' . (int) $instance['id'] . '/clear')) ?>" onsubmit="return confirm('Delete ALL entered results for this event? This cannot be undone.');">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Delete All Results</button>
+            </form>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="mt-4 rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-800">
@@ -102,3 +114,31 @@ window.RESULT = { save: <?= json_encode(url('results/' . (int) $instance['id'] .
 </script>
 <script src="<?= e(asset('js/results.js')) ?>"></script>
 <?php endif; ?>
+
+<script>
+(function () {
+    var btn = document.querySelector('.pub-switch');
+    if (!btn) return;
+    btn.addEventListener('click', async function () {
+        var on = btn.getAttribute('aria-checked') === 'true';
+        var next = on ? 0 : 1;
+        btn.disabled = true;
+        var fd = new FormData(); fd.append('published', String(next));
+        try {
+            var res = await window.apiFetch(btn.dataset.publishUrl, { method: 'POST', body: fd });
+            var pub = !!res.published;
+            btn.setAttribute('aria-checked', pub ? 'true' : 'false');
+            btn.classList.toggle('bg-emerald-500', pub);
+            btn.classList.toggle('bg-slate-300', !pub);
+            var knob = btn.querySelector('.pub-knob');
+            knob.classList.toggle('translate-x-6', pub);
+            knob.classList.toggle('translate-x-1', !pub);
+            btn.title = pub ? 'Published — click to unpublish' : 'Unpublished — click to publish';
+            window.Toast.show(res.message || 'Saved.', 'success');
+        } catch (err) {
+            window.Toast.show(err.message || 'Failed to update.', 'error');
+        }
+        btn.disabled = false;
+    });
+})();
+</script>
