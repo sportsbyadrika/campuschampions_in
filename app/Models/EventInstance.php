@@ -23,7 +23,7 @@ class EventInstance extends Model
              JOIN discipline_masters d ON d.id = e.discipline_id
              JOIN categories c ON c.id = ei.category_id
              WHERE d.meet_id = ?
-             ORDER BY ei.instance_date, ei.instance_time, e.name",
+             ORDER BY ei.label ASC",
             [$meetId]
         );
     }
