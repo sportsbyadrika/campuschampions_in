@@ -5,7 +5,7 @@ $genderLabels = ['M' => 'Male', 'F' => 'Female', 'O' => 'Other'];
 ?>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div class="flex items-center gap-3">
-        <a href="<?= e(url('results?meet_id=' . (int) $instance['meet_id'])) ?>" class="text-slate-400 hover:text-primary"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="<?= e(url('results')) ?>" class="text-slate-400 hover:text-primary" title="Back to results (keeps your filters)"><i class="fa-solid fa-arrow-left"></i></a>
         <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><i class="fa-solid fa-pen"></i></span>
         <div>
             <h1 class="text-2xl font-bold text-slate-900"><?= e($instance['label']) ?></h1>

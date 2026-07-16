@@ -1,5 +1,5 @@
 <?php
-/** @var array $instances @var array $meets @var int $meetId @var array $instanceChoices @var int $instanceId @var bool $canEnter @var bool $canPublish */
+/** @var array $instances @var array $meets @var int $meetId @var array $instanceChoices @var int $instanceId @var string $published @var string $entered @var string $reg @var bool $canEnter @var bool $canPublish */
 ?>
 <div class="flex items-center gap-3">
     <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><i class="fa-solid fa-ranking-star"></i></span>
@@ -29,6 +29,33 @@
                 <?php endforeach; ?>
             </select>
         </div>
+        <div>
+            <label class="form-label">Published</label>
+            <select name="published" class="form-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="1" <?= $published === '1' ? 'selected' : '' ?>>Published</option>
+                <option value="0" <?= $published === '0' ? 'selected' : '' ?>>Unpublished</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Results</label>
+            <select name="entered" class="form-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="1" <?= $entered === '1' ? 'selected' : '' ?>>Entered</option>
+                <option value="0" <?= $entered === '0' ? 'selected' : '' ?>>Not entered</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Registrations</label>
+            <select name="reg" class="form-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="1" <?= $reg === '1' ? 'selected' : '' ?>>Has registrations</option>
+                <option value="0" <?= $reg === '0' ? 'selected' : '' ?>>No registrations</option>
+            </select>
+        </div>
+        <?php if ($meetId || $instanceId || $published !== '' || $entered !== '' || $reg !== ''): ?>
+            <a href="<?= e(url('results?meet_id=&instance_id=&published=&entered=&reg=')) ?>" class="btn btn-secondary">Clear</a>
+        <?php endif; ?>
     </form>
 
     <div class="overflow-x-auto">

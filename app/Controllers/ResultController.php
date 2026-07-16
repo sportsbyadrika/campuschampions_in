@@ -47,8 +47,25 @@ class ResultController extends Controller
     {
         $this->authorize('super_admin', 'campus_admin', 'event_user', 'campus_staff');
 
-        $meetId = (int) Request::get('meet_id', 0);
-        $instanceId = (int) Request::get('instance_id', 0);
+        // Remember the filter selection across navigation (e.g. after entering
+        // results and returning). If the request carries any filter param, use
+        // it and store it; otherwise restore the last-used filter from session.
+        $filterKeys = ['meet_id', 'instance_id', 'published', 'entered', 'reg'];
+        $hasQuery = false;
+        foreach ($filterKeys as $k) { if (isset($_GET[$k])) { $hasQuery = true; break; } }
+        if ($hasQuery) {
+            $f = [];
+            foreach ($filterKeys as $k) { $f[$k] = (string) Request::get($k, ''); }
+            $_SESSION['results_filter'] = $f;
+        } else {
+            $f = $_SESSION['results_filter'] ?? [];
+        }
+        $meetId     = (int) ($f['meet_id'] ?? 0);
+        $instanceId = (int) ($f['instance_id'] ?? 0);
+        $published  = (string) ($f['published'] ?? ''); // '' all, '1', '0'
+        $entered    = (string) ($f['entered'] ?? '');   // '' all, '1', '0'
+        $reg        = (string) ($f['reg'] ?? '');        // '' all, '1', '0'
+
         $params = [];
         $where = [];
 
@@ -72,7 +89,7 @@ class ResultController extends Controller
         }
 
         // Event-instance dropdown options: current scope (campus + meet + role)
-        // but WITHOUT the instance filter, ordered alphabetically.
+        // but WITHOUT the instance/status filters, ordered alphabetically.
         $optWhereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
         $instanceChoices = Database::instance()->fetchAll(
             "SELECT ei.id, ei.label
@@ -89,6 +106,23 @@ class ResultController extends Controller
         if ($instanceId > 0) {
             $where[] = 'ei.id = ?';
             $params[] = $instanceId;
+        }
+        // Published / unpublished
+        if ($published === '1' || $published === '0') {
+            $where[] = 'ei.results_published = ?';
+            $params[] = (int) $published;
+        }
+        // Results entered / not entered
+        if ($entered === '1') {
+            $where[] = 'EXISTS (SELECT 1 FROM results rs WHERE rs.event_instance_id = ei.id)';
+        } elseif ($entered === '0') {
+            $where[] = 'NOT EXISTS (SELECT 1 FROM results rs WHERE rs.event_instance_id = ei.id)';
+        }
+        // Has registrations / none
+        if ($reg === '1') {
+            $where[] = 'EXISTS (SELECT 1 FROM contestant_registrations r WHERE r.event_instance_id = ei.id)';
+        } elseif ($reg === '0') {
+            $where[] = 'NOT EXISTS (SELECT 1 FROM contestant_registrations r WHERE r.event_instance_id = ei.id)';
         }
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
@@ -115,6 +149,9 @@ class ResultController extends Controller
             'meetId'          => $meetId,
             'instanceChoices' => $instanceChoices,
             'instanceId'      => $instanceId,
+            'published'       => $published,
+            'entered'         => $entered,
+            'reg'             => $reg,
             'canEnter'        => Auth::is('super_admin', 'campus_admin', 'event_user'),
             'canPublish'      => Auth::is('super_admin', 'campus_admin', 'event_user'),
         ]);
