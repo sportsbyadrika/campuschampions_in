@@ -44,10 +44,10 @@ foreach ($instanceChoices as $ei) {
 
     <div class="overflow-x-auto">
         <table class="data-table">
-            <thead><tr><th>Instance</th><th>Event</th><th>Meet</th><th>Results</th><th>Certificates</th><th class="text-right">Action</th></tr></thead>
+            <thead><tr><th>Instance</th><th>Event</th><th>Meet</th><th>Results</th><th>Certificates</th><th>Issued</th><th class="text-right">Action</th></tr></thead>
             <tbody>
                 <?php if (empty($instances)): ?>
-                    <tr><td colspan="6" class="text-center py-10 text-slate-400"><i class="fa-solid fa-inbox text-2xl mb-2 block"></i>No event instances found.</td></tr>
+                    <tr><td colspan="7" class="text-center py-10 text-slate-400"><i class="fa-solid fa-inbox text-2xl mb-2 block"></i>No event instances found.</td></tr>
                 <?php else: foreach ($instances as $i): ?>
                     <tr>
                         <td class="font-medium"><?= e($i['label']) ?></td>
@@ -58,6 +58,11 @@ foreach ($instanceChoices as $ei) {
                             <?php if ((int) $i['cert_count'] > 0): ?>
                                 <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700"><?= (int) $i['cert_count'] ?></span>
                             <?php else: ?><span class="text-xs text-slate-400">None</span><?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ((int) $i['issued_count'] > 0): ?>
+                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700"><?= (int) $i['issued_count'] ?></span>
+                            <?php else: ?><span class="text-xs text-slate-400">0</span><?php endif; ?>
                         </td>
                         <td class="text-right">
                             <a href="<?= e(url('certificates/' . (int) $i['id'] . '/generate')) ?>" class="btn btn-primary btn-sm !inline-flex" <?= (int) $i['result_count'] === 0 ? 'style="pointer-events:none;opacity:.5"' : '' ?>><i class="fa-solid fa-award"></i> Generate</a>

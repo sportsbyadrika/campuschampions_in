@@ -67,7 +67,8 @@ class CertificateController extends Controller
             "SELECT ei.id, ei.label, ei.instance_date, e.name AS event_name, d.name AS discipline_name,
                     c.name AS category_name, m.title AS meet_title,
                     (SELECT COUNT(*) FROM results r WHERE r.event_instance_id = ei.id) AS result_count,
-                    (SELECT COUNT(*) FROM certificates ce WHERE ce.event_instance_id = ei.id) AS cert_count
+                    (SELECT COUNT(*) FROM certificates ce WHERE ce.event_instance_id = ei.id) AS cert_count,
+                    (SELECT COUNT(*) FROM certificates ce WHERE ce.event_instance_id = ei.id AND ce.status = 'issued') AS issued_count
              FROM event_instances ei
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id
