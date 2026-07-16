@@ -152,6 +152,7 @@ $router->get('/certificates/{instanceId}/generate',  'CertificateController@gene
 $router->post('/certificates/{instanceId}/generate', 'CertificateController@generate',      ['auth']);
 $router->get('/certificates/{instanceId}/print-all',  'CertificateController@printAll',      ['auth']);
 $router->post('/certificates/{certId}/delete',        'CertificateController@deleteCertificate', ['auth']);
+$router->post('/certificates/{certId}/status',        'CertificateController@setStatus',         ['auth']);
 
 // ---------------------------------------------------------------------
 // Audit logs & system reports (Super Admin)

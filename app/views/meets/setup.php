@@ -158,7 +158,7 @@ $renderSection('events', 'Events', $events, [
 ], 'Add Event');
 
 $renderSection('instances', 'Event Instances', $instances, [
-    ['key' => 'label', 'label' => 'Label'], ['key' => 'event_name', 'label' => 'Event'], ['key' => 'category_name', 'label' => 'Category'], ['key' => 'instance_date', 'label' => 'Date'], ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
+    ['key' => 'label', 'label' => 'Label'], ['key' => 'event_name', 'label' => 'Event'], ['key' => 'category_name', 'label' => 'Category'], ['key' => 'instance_date', 'label' => 'Date'], ['key' => 'reg_count', 'label' => 'Registrations'], ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
 ], 'Add Instance');
 ?>
 

@@ -16,7 +16,8 @@ class EventInstance extends Model
     public function forMeet(int $meetId): array
     {
         return $this->db->fetchAll(
-            "SELECT ei.*, e.name AS event_name, d.name AS discipline_name, c.name AS category_name
+            "SELECT ei.*, e.name AS event_name, d.name AS discipline_name, c.name AS category_name,
+                    (SELECT COUNT(*) FROM contestant_registrations r WHERE r.event_instance_id = ei.id) AS reg_count
              FROM event_instances ei
              JOIN event_masters e ON e.id = ei.event_id
              JOIN discipline_masters d ON d.id = e.discipline_id

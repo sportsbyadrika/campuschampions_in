@@ -97,7 +97,7 @@ class CertificateController extends Controller
         // Contestants with results for this instance
         $contestants = Database::instance()->fetchAll(
             "SELECT cm.id, cm.unique_number, cm.name, r.position,
-                    ce.id AS certificate_id, ce.certificate_number, ce.file_path
+                    ce.id AS certificate_id, ce.certificate_number, ce.file_path, ce.status AS certificate_status
              FROM results r
              JOIN contestant_masters cm ON cm.id = r.contestant_id
              LEFT JOIN certificates ce ON ce.event_instance_id = r.event_instance_id AND ce.contestant_id = cm.id
@@ -195,6 +195,31 @@ class CertificateController extends Controller
         (new Certificate())->delete($certId);
         Audit::log('delete', 'certificates', $certId, $cert, null);
         $this->json(['success' => true, 'message' => 'Certificate deleted.']);
+    }
+
+    /** Toggle a certificate's issued status (generated <-> issued). */
+    public function setStatus(string $certId): void
+    {
+        $this->authorize('super_admin', 'campus_admin', 'event_user');
+        $certId = (int) $certId;
+        $cert = (new Certificate())->find($certId);
+        if (!$cert) {
+            $this->json(['success' => false, 'message' => 'Certificate not found.'], 404);
+        }
+        $detail = (new EventInstance())->detail((int) $cert['event_instance_id']);
+        if (!$detail || (Auth::campusId() !== null && (int) $detail['campus_id'] !== (int) Auth::campusId())) {
+            $this->json(['success' => false, 'message' => 'Not allowed.'], 403);
+        }
+        $issued = (int) Request::input('issued', 0) === 1;
+        $status = $issued ? 'issued' : 'generated';
+        (new Certificate())->update($certId, ['status' => $status]);
+        Audit::log('update', 'certificates', $certId, ['status' => $cert['status']], ['status' => $status]);
+        $this->json([
+            'success' => true,
+            'status'  => $status,
+            'issued'  => $issued,
+            'message' => $issued ? 'Marked as issued.' : 'Marked as generated.',
+        ]);
     }
 
     // Generate certificates for selected contestants

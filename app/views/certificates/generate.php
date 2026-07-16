@@ -41,7 +41,7 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
             <table class="data-table">
                 <thead><tr>
                     <th class="w-10"><input type="checkbox" id="selectAll" checked></th>
-                    <th>Unique #</th><th>Contestant</th><th>Position</th><th>Certificate #</th><th class="text-right">PDF</th>
+                    <th>Unique #</th><th>Contestant</th><th>Position</th><th>Certificate #</th><th>Status</th><th class="text-right">PDF</th>
                 </tr></thead>
                 <tbody>
                     <?php foreach ($contestants as $c): ?>
@@ -51,6 +51,21 @@ $posLabels = ['first' => '1st', 'second' => '2nd', 'third' => '3rd', 'participan
                         <td class="font-medium"><?= e($c['name']) ?></td>
                         <td><?= e($posLabels[$c['position']] ?? $c['position']) ?></td>
                         <td><?= e($c['certificate_number'] ?? '—') ?></td>
+                        <td>
+                            <?php if (!empty($c['certificate_id'])): $issued = ($c['certificate_status'] ?? '') === 'issued'; ?>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" role="switch" aria-checked="<?= $issued ? 'true' : 'false' ?>"
+                                            class="cert-status relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors <?= $issued ? 'bg-emerald-500' : 'bg-slate-300' ?>"
+                                            data-status-url="<?= e(url('certificates/' . (int) $c['certificate_id'] . '/status')) ?>"
+                                            title="Toggle issued status">
+                                        <span class="cert-knob inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform <?= $issued ? 'translate-x-4' : 'translate-x-1' ?>"></span>
+                                    </button>
+                                    <span class="cert-status-label text-xs font-medium <?= $issued ? 'text-emerald-700' : 'text-slate-500' ?>"><?= $issued ? 'Issued' : 'Generated' ?></span>
+                                </div>
+                            <?php else: ?>
+                                <span class="text-xs text-slate-400">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="text-right whitespace-nowrap">
                             <?php if (!empty($c['certificate_id']) && !empty($c['file_path'])): ?>
                                 <a href="<?= e(url('certificates/download/' . (int) $c['certificate_id'])) ?>" target="_blank" class="text-primary hover:underline text-sm"><i class="fa-solid fa-file-pdf"></i> View</a>
@@ -82,6 +97,30 @@ document.querySelectorAll('.cert-del').forEach(function (b) {
             window.Toast.show(err.message || 'Failed to delete.', 'error');
             b.disabled = false;
         }
+    });
+});
+document.querySelectorAll('.cert-status').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+        var on = btn.getAttribute('aria-checked') === 'true';
+        var next = on ? 0 : 1;
+        btn.disabled = true;
+        var fd = new FormData(); fd.append('issued', String(next));
+        try {
+            var res = await window.apiFetch(btn.dataset.statusUrl, { method: 'POST', body: fd });
+            var issued = !!res.issued;
+            btn.setAttribute('aria-checked', issued ? 'true' : 'false');
+            btn.classList.toggle('bg-emerald-500', issued);
+            btn.classList.toggle('bg-slate-300', !issued);
+            var knob = btn.querySelector('.cert-knob');
+            knob.classList.toggle('translate-x-4', issued);
+            knob.classList.toggle('translate-x-1', !issued);
+            var lbl = btn.parentNode.querySelector('.cert-status-label');
+            if (lbl) { lbl.textContent = issued ? 'Issued' : 'Generated'; lbl.classList.toggle('text-emerald-700', issued); lbl.classList.toggle('text-slate-500', !issued); }
+            window.Toast.show(res.message || 'Saved.', 'success');
+        } catch (err) {
+            window.Toast.show(err.message || 'Failed to update.', 'error');
+        }
+        btn.disabled = false;
     });
 });
 </script>
