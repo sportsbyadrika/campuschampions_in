@@ -1,5 +1,5 @@
 <?php
-/** @var array $instances @var array $meets @var int $meetId @var bool $canEnter @var bool $canPublish */
+/** @var array $instances @var array $meets @var int $meetId @var array $instanceChoices @var int $instanceId @var bool $canEnter @var bool $canPublish */
 ?>
 <div class="flex items-center gap-3">
     <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><i class="fa-solid fa-ranking-star"></i></span>
@@ -17,6 +17,15 @@
                 <option value="">All meets</option>
                 <?php foreach ($meets as $m): ?>
                     <option value="<?= (int) $m['id'] ?>" <?= $meetId === (int) $m['id'] ? 'selected' : '' ?>><?= e($m['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">Event Instance</label>
+            <select name="instance_id" class="form-select" onchange="this.form.submit()">
+                <option value="">All event instances</option>
+                <?php foreach ($instanceChoices as $ei): ?>
+                    <option value="<?= (int) $ei['id'] ?>" <?= $instanceId === (int) $ei['id'] ? 'selected' : '' ?>><?= e($ei['label']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

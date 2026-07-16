@@ -48,6 +48,7 @@ class ResultController extends Controller
         $this->authorize('super_admin', 'campus_admin', 'event_user', 'campus_staff');
 
         $meetId = (int) Request::get('meet_id', 0);
+        $instanceId = (int) Request::get('instance_id', 0);
         $params = [];
         $where = [];
 
@@ -69,6 +70,26 @@ class ResultController extends Controller
                 $params = array_merge($params, $ids);
             }
         }
+
+        // Event-instance dropdown options: current scope (campus + meet + role)
+        // but WITHOUT the instance filter, ordered alphabetically.
+        $optWhereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+        $instanceChoices = Database::instance()->fetchAll(
+            "SELECT ei.id, ei.label
+             FROM event_instances ei
+             JOIN event_masters e ON e.id = ei.event_id
+             JOIN discipline_masters d ON d.id = e.discipline_id
+             JOIN meet_masters m ON m.id = d.meet_id
+             $optWhereSql
+             ORDER BY ei.label ASC",
+            $params
+        );
+
+        // Narrow the list to a single instance when chosen.
+        if ($instanceId > 0) {
+            $where[] = 'ei.id = ?';
+            $params[] = $instanceId;
+        }
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
         $instances = Database::instance()->fetchAll(
@@ -88,12 +109,14 @@ class ResultController extends Controller
         );
 
         $this->view('results/index', [
-            'title'      => 'Results',
-            'instances'  => $instances,
-            'meets'      => (new MeetMaster())->options(),
-            'meetId'     => $meetId,
-            'canEnter'   => Auth::is('super_admin', 'campus_admin', 'event_user'),
-            'canPublish' => Auth::is('super_admin', 'campus_admin', 'event_user'),
+            'title'           => 'Results',
+            'instances'       => $instances,
+            'meets'           => (new MeetMaster())->options(),
+            'meetId'          => $meetId,
+            'instanceChoices' => $instanceChoices,
+            'instanceId'      => $instanceId,
+            'canEnter'        => Auth::is('super_admin', 'campus_admin', 'event_user'),
+            'canPublish'      => Auth::is('super_admin', 'campus_admin', 'event_user'),
         ]);
     }
 
