@@ -75,7 +75,12 @@ class CertificateTemplateController extends Controller
             $this->redirect('/certificate-templates/new');
         }
         $data['campus_id'] = Auth::campusId();
-        $id = (new CertificateTemplate())->create($data);
+        try {
+            $id = (new CertificateTemplate())->create($data);
+        } catch (\Throwable $e) {
+            Flash::error($this->dbError($e));
+            $this->redirect('/certificate-templates/new');
+        }
         Audit::log('create', 'certificate_templates', $id, null, ['name' => $data['name']]);
         Flash::success('Certificate template created.');
         $this->redirect('/certificate-templates');
@@ -95,10 +100,26 @@ class CertificateTemplateController extends Controller
             Flash::error($err);
             $this->redirect('/certificate-templates/' . $id . '/edit');
         }
-        $model->update($id, $data);
+        try {
+            $model->update($id, $data);
+        } catch (\Throwable $e) {
+            Flash::error($this->dbError($e));
+            $this->redirect('/certificate-templates/' . $id . '/edit');
+        }
         Audit::log('update', 'certificate_templates', $id, $existing, $data);
         Flash::success('Certificate template updated.');
         $this->redirect('/certificate-templates');
+    }
+
+    /** Friendly message for a DB error while saving a template. */
+    private function dbError(\Throwable $e): string
+    {
+        error_log('certificate template save failed: ' . $e->getMessage());
+        $msg = 'Could not save the template: ' . $e->getMessage();
+        if (stripos($e->getMessage(), 'column') !== false) {
+            $msg .= ' — the certificate-template columns may be missing; apply migrations 004_certificate_layout.sql and 005_certificate_number_date_fonts.sql.';
+        }
+        return $msg;
     }
 
     public function destroy(string $id): void
