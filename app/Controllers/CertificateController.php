@@ -128,13 +128,14 @@ class CertificateController extends Controller
         $rows = Database::instance()->fetchAll(
             "SELECT ce.certificate_number, ce.issue_date, ce.template_used,
                     cm.name AS contestant_name, cm.unique_number, h.name AS house_name,
-                    co.name AS course_name, dv.name AS division_name, r.position
+                    co.name AS course_name, dv.name AS division_name, g.name AS group_name, r.position
              FROM certificates ce
              JOIN contestant_masters cm ON cm.id = ce.contestant_id
              JOIN results r ON r.contestant_id = cm.id AND r.event_instance_id = ce.event_instance_id
              LEFT JOIN houses h ON h.id = cm.house_id
              LEFT JOIN courses co ON co.id = cm.course_id
              LEFT JOIN divisions dv ON dv.id = cm.division_id
+             LEFT JOIN course_category_groups g ON g.id = cm.course_category_group_id
              WHERE ce.event_instance_id = ?
              ORDER BY FIELD(r.position,'first','second','third','participant'), cm.name",
             [$instanceId]
@@ -163,6 +164,7 @@ class CertificateController extends Controller
                 'house_name'        => $row['house_name'] ?? '',
                 'course'            => $row['course_name'] ?? '',
                 'division'          => $row['division_name'] ?? '',
+                'category_group'    => $row['group_name'] ?? '',
                 'position'          => self::POS_LABELS[$row['position']] ?? ucfirst($row['position']),
                 'event_label'       => $instance['label'],
                 'event_name'        => $instance['event_name'],
@@ -233,12 +235,13 @@ class CertificateController extends Controller
             // Fetch contestant + result + house + course/division
             $row = $db->fetch(
                 "SELECT cm.name AS contestant_name, cm.unique_number, h.name AS house_name,
-                        co.name AS course_name, dv.name AS division_name, r.position
+                        co.name AS course_name, dv.name AS division_name, g.name AS group_name, r.position
                  FROM contestant_masters cm
                  JOIN results r ON r.contestant_id = cm.id AND r.event_instance_id = ?
                  LEFT JOIN houses h ON h.id = cm.house_id
                  LEFT JOIN courses co ON co.id = cm.course_id
                  LEFT JOIN divisions dv ON dv.id = cm.division_id
+                 LEFT JOIN course_category_groups g ON g.id = cm.course_category_group_id
                  WHERE cm.id = ?",
                 [$instanceId, $cid]
             );
@@ -260,6 +263,7 @@ class CertificateController extends Controller
                 'house_name'        => $row['house_name'] ?? '',
                 'course'            => $row['course_name'] ?? '',
                 'division'          => $row['division_name'] ?? '',
+                'category_group'    => $row['group_name'] ?? '',
                 'position'          => self::POS_LABELS[$row['position']] ?? ucfirst($row['position']),
                 'event_label'       => $instance['label'],
                 'event_name'        => $instance['event_name'],

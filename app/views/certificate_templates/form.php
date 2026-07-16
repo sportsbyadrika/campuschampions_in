@@ -8,7 +8,8 @@ $placeholders = [
     '{{contestant_name}}' => 'contestant', '{{course}}' => 'course', '{{division}}' => 'division',
     '{{position}}' => 'result', '{{event_label}}' => 'event instance', '{{event_name}}' => 'event',
     '{{meet_title}}' => 'meet', '{{issue_date}}' => 'date', '{{unique_number}}' => 'unique #',
-    '{{house_name}}' => 'house', '{{category}}' => 'category', '{{certificate_number}}' => 'certificate #',
+    '{{house_name}}' => 'house', '{{category}}' => 'category', '{{category_group}}' => 'category group',
+    '{{certificate_number}}' => 'certificate #',
 ];
 ?>
 <div class="flex items-center gap-3">

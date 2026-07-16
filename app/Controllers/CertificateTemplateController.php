@@ -152,6 +152,7 @@ class CertificateTemplateController extends Controller
             'house_name'         => 'Red House',
             'course'             => 'Grade 10',
             'division'           => 'A',
+            'category_group'     => 'Senior',
             'position'           => 'First',
             'event_label'        => 'Boys Solo Singing — Final',
             'event_name'         => 'Solo Singing',
