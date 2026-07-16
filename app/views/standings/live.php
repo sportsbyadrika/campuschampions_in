@@ -16,7 +16,7 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         :root {
             --gold:#fbbf24; --silver:#cbd5e1; --bronze:#d97706;
             --ink:#e5edf7; --muted:#93a4bd; --line:rgba(255,255,255,.12);
-            --pts:#fbbf24;      /* house total points accent */
+            --pts:#800000;      /* house total points + category total accent (maroon) */
             --evt:#38bdf8;      /* event instance emphasis */
             --wh:#fbbf24;       /* winner house colour */
             --wc:#34d399;       /* winner course/division colour */
