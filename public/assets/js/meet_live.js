@@ -17,6 +17,57 @@
         speed.addEventListener('input', function () { speedVal.textContent = speed.value; });
     }
 
+    // ---------- Banner slide-interval slider ----------
+    var bInt = document.getElementById('bannerInterval');
+    var bIntVal = document.getElementById('bannerIntervalVal');
+    if (bInt && bIntVal) {
+        bInt.addEventListener('input', function () { bIntVal.textContent = bInt.value; });
+    }
+
+    // ---------- Slideshow banners: add / delete ----------
+    var bannerFiles = document.getElementById('bannerFiles');
+    var bannerList = document.getElementById('bannerList');
+    var bannerEmpty = document.getElementById('bannerEmpty');
+    var addBannersBtn = document.getElementById('addBanners');
+    function addThumb(id, url) {
+        if (bannerEmpty) bannerEmpty.classList.add('hidden');
+        var div = document.createElement('div');
+        div.className = 'relative overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200';
+        div.setAttribute('data-banner-id', id);
+        div.innerHTML = '<img src="' + url + '" alt="" class="h-20 w-full object-contain">' +
+            '<button type="button" class="banner-del absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-rose-600 ring-1 ring-slate-200 hover:bg-white" title="Remove"><i class="fa-solid fa-xmark text-xs"></i></button>';
+        bannerList.appendChild(div);
+    }
+    if (addBannersBtn && bannerFiles && bannerList) {
+        addBannersBtn.addEventListener('click', function () { bannerFiles.click(); });
+        bannerFiles.addEventListener('change', async function () {
+            var files = Array.prototype.slice.call(bannerFiles.files || []);
+            bannerFiles.value = '';
+            for (var i = 0; i < files.length; i++) {
+                var fd = new FormData(); fd.append('banner', files[i]);
+                try {
+                    var res = await window.apiFetch(MEET.base + '/banners', { method: 'POST', body: fd });
+                    addThumb(res.id, res.url);
+                } catch (err) {
+                    window.Toast.show(err.message || 'Failed to add banner.', 'error');
+                }
+            }
+        });
+        bannerList.addEventListener('click', async function (e) {
+            var del = e.target.closest('.banner-del');
+            if (!del) return;
+            var card = del.closest('[data-banner-id]');
+            if (!card || !confirm('Remove this banner?')) return;
+            try {
+                await window.apiFetch(MEET.base + '/banners/' + card.getAttribute('data-banner-id') + '/delete', { method: 'POST', body: new FormData() });
+                card.remove();
+                if (bannerEmpty && !bannerList.querySelector('[data-banner-id]')) bannerEmpty.classList.remove('hidden');
+            } catch (err) {
+                window.Toast.show(err.message || 'Failed to remove.', 'error');
+            }
+        });
+    }
+
     // ---------- Crop modal machinery ----------
     var modal = document.getElementById('cropModal');
     var stage = document.getElementById('cropStage');
@@ -191,6 +242,7 @@
         var btn = this;
         var fd = new FormData();
         fd.append('winners_scroll_speed', speed ? speed.value : '28');
+        fd.append('banner_interval', bInt ? bInt.value : '6');
         Object.keys(fields).forEach(function (field) {
             var f = fields[field];
             if (f.blob) fd.append(field, f.blob, f.filename || (field + '.png'));

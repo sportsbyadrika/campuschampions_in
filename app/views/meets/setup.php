@@ -97,6 +97,33 @@ $liveImg = function (string $field, string $title, string $hint, string $ratioLa
         <div class="mt-2 flex justify-between text-xs text-slate-400"><span>Slower</span><span>Faster</span></div>
     </div>
 
+    <div class="mt-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <div class="flex items-start justify-between gap-2">
+            <div>
+                <h3 class="font-semibold text-slate-900">Slideshow Banners</h3>
+                <p class="text-sm text-slate-500 mt-0.5">Small banners shown in a rotating panel on the left of the live screen.</p>
+            </div>
+            <div>
+                <input type="file" accept="image/png,image/jpeg,image/webp" class="hidden" id="bannerFiles" multiple>
+                <button type="button" class="btn btn-secondary btn-sm" id="addBanners"><i class="fa-solid fa-images"></i> Add Banners</button>
+            </div>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4" id="bannerList">
+            <?php foreach ($banners as $b): ?>
+                <div class="relative overflow-hidden rounded-lg bg-slate-50 ring-1 ring-slate-200" data-banner-id="<?= (int) $b['id'] ?>">
+                    <img src="<?= e(asset($b['image_path'])) ?>" alt="" class="h-20 w-full object-contain">
+                    <button type="button" class="banner-del absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-rose-600 ring-1 ring-slate-200 hover:bg-white" title="Remove"><i class="fa-solid fa-xmark text-xs"></i></button>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        <p class="mt-2 text-xs text-slate-400 <?= empty($banners) ? '' : 'hidden' ?>" id="bannerEmpty">No banners yet — the slideshow panel stays hidden on the live screen until you add at least one.</p>
+        <div class="mt-4 flex max-w-md items-center gap-4">
+            <span class="text-sm font-medium text-slate-600 whitespace-nowrap">Slide interval</span>
+            <input type="range" id="bannerInterval" min="2" max="30" step="1" value="<?= (int) ($meet['banner_interval'] ?? 6) ?>" class="flex-1 accent-primary">
+            <span class="text-sm font-semibold text-slate-700"><span id="bannerIntervalVal"><?= (int) ($meet['banner_interval'] ?? 6) ?></span>s</span>
+        </div>
+    </div>
+
     <div class="mt-4 flex justify-end">
         <button type="button" id="saveLiveSettings" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Live Screen Settings</button>
     </div>

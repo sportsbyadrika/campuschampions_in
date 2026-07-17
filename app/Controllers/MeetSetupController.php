@@ -49,6 +49,7 @@ class MeetSetupController extends Controller
         $this->view('meets/setup', [
             'title'       => 'Meet Setup · ' . $meet['title'],
             'meet'        => $meet,
+            'banners'     => (new \App\Models\MeetBanner())->forMeet($meetId),
             'disciplines' => $disciplines,
             'categories'  => $categories,
             'events'      => $events,
@@ -264,6 +265,9 @@ class MeetSetupController extends Controller
         $speed = (int) Request::input('winners_scroll_speed', 28);
         $data['winners_scroll_speed'] = max(5, min(200, $speed));
 
+        $interval = (int) Request::input('banner_interval', 6);
+        $data['banner_interval'] = max(2, min(60, $interval));
+
         $images = [
             'logo'             => 'logo_path',
             'banner'           => 'banner_path',
@@ -310,6 +314,44 @@ class MeetSetupController extends Controller
             'institution_logo' => $pathFor('institution_logo_path'),
         ];
         $this->json(['success' => true, 'message' => 'Live-screen settings saved.', 'paths' => $paths, 'winners_scroll_speed' => $data['winners_scroll_speed']]);
+    }
+
+    /** Add one slideshow banner image to a meet (uploaded as-is). */
+    public function addBanner(string $meetId): void
+    {
+        $meetId = (int) $meetId;
+        $this->meetOrAbort($meetId);
+        $file = Request::file('banner');
+        if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $this->json(['success' => false, 'message' => 'No image uploaded.'], 422);
+        }
+        try {
+            $path = \App\Core\FileUpload::image($file, 'meets/banners');
+        } catch (\RuntimeException $e) {
+            $this->json(['success' => false, 'message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            error_log('addBanner failed: ' . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Could not save the banner: ' . $e->getMessage()], 500);
+        }
+        $next = (int) Database::instance()->scalar("SELECT COALESCE(MAX(sort_order), 0) + 1 FROM meet_banners WHERE meet_id = ?", [$meetId]);
+        $id = (new \App\Models\MeetBanner())->create(['meet_id' => $meetId, 'image_path' => $path, 'sort_order' => $next]);
+        Audit::log('create', 'meet_banners', $id, null, ['meet_id' => $meetId]);
+        $this->json(['success' => true, 'id' => $id, 'url' => asset($path), 'message' => 'Banner added.']);
+    }
+
+    /** Delete a slideshow banner from a meet. */
+    public function deleteBanner(string $meetId, string $bannerId): void
+    {
+        $meetId = (int) $meetId;
+        $this->meetOrAbort($meetId);
+        $banner = (new \App\Models\MeetBanner())->find((int) $bannerId);
+        if (!$banner || (int) $banner['meet_id'] !== $meetId) {
+            $this->json(['success' => false, 'message' => 'Banner not found.'], 404);
+        }
+        \App\Core\FileUpload::delete($banner['image_path'] ?? null);
+        (new \App\Models\MeetBanner())->delete((int) $bannerId);
+        Audit::log('delete', 'meet_banners', (int) $bannerId, $banner, null);
+        $this->json(['success' => true, 'message' => 'Banner removed.']);
     }
 
     // ------------------------------------------------------------------

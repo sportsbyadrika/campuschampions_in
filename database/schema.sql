@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS `meet_masters` (
     `banner_path`           VARCHAR(255) DEFAULT NULL,
     `institution_logo_path` VARCHAR(255) DEFAULT NULL,
     `winners_scroll_speed`  SMALLINT UNSIGNED NOT NULL DEFAULT 28,
+    `banner_interval`       SMALLINT UNSIGNED NOT NULL DEFAULT 6,
     `cert_next_seq` INT UNSIGNED DEFAULT NULL,
     `campus_id`   INT UNSIGNED NOT NULL,
     `status`      ENUM('active','inactive','completed') NOT NULL DEFAULT 'active',
@@ -183,6 +184,21 @@ CREATE TABLE IF NOT EXISTS `meet_masters` (
     KEY `idx_meet_campus` (`campus_id`),
     CONSTRAINT `fk_meet_campus` FOREIGN KEY (`campus_id`)
         REFERENCES `institutions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- meet_banners (slideshow banners for the live dashboard)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `meet_banners` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `meet_id`    INT UNSIGNED NOT NULL,
+    `image_path` VARCHAR(255) NOT NULL,
+    `sort_order` INT NOT NULL DEFAULT 0,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_meet_banner` (`meet_id`),
+    CONSTRAINT `fk_meet_banner_meet` FOREIGN KEY (`meet_id`)
+        REFERENCES `meet_masters` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------

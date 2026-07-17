@@ -6,6 +6,8 @@ $meetLogo        = $meetLogo ?? '';
 $institutionLogo = $institutionLogo ?? '';
 $bannerImage     = $bannerImage ?? '';
 $scrollSpeed     = (int) ($scrollSpeed ?? 28);
+$banners         = $banners ?? [];
+$bannerInterval  = (int) ($bannerInterval ?? 6);
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,7 +70,17 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
         .panel > .head { padding: 1.1vh 1.2vw; border-bottom: 1px solid var(--line); font-size: 2vh; font-weight: 700; color: #fff; display: flex; align-items: center; gap: .5vw; }
         .panel > .head .dot { color: var(--gold); }
         .panel > .body { padding: 1vh 1.2vw; overflow: hidden; flex: 1; min-height: 0; }
-        .col > .panel { flex: 1; }              /* left column: two panels at 50/50 height */
+        .col > .panel { flex: 1; }              /* left column data panels share the height */
+        .col > .panel.banners { flex: 0 0 22vh; }  /* slideshow panel keeps a fixed height; the others adjust */
+
+        /* ---- Slideshow banners ---- */
+        .slideshow { position: relative; height: 100%; width: 100%; overflow: hidden; }
+        .slideshow .slide {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: translateX(6%); transition: opacity .8s ease, transform .8s ease;
+        }
+        .slideshow .slide.active { opacity: 1; transform: translateX(0); }
+        .slideshow .slide img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
 
         /* ---- House standings (enlarged, headed table) ---- */
         .house-table thead th { text-transform: none; font-size: 1.5vh; font-weight: 700; color: var(--muted); }
@@ -156,6 +168,17 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
                     <div class="scroller" id="catScroller"><div class="track" id="catTrack"><div class="loading">Loading…</div></div></div>
                 </div>
             </div>
+            <?php if (!empty($banners)): ?>
+            <div class="panel banners">
+                <div class="body" style="padding:.8vh;">
+                    <div class="slideshow" id="bannerShow">
+                        <?php foreach ($banners as $i => $b): ?>
+                            <div class="slide<?= $i === 0 ? ' active' : '' ?>"><img src="<?= e($b) ?>" alt=""></div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
         <div class="col">
             <div class="panel" style="flex:1">
@@ -207,6 +230,21 @@ $scrollSpeed     = (int) ($scrollSpeed ?? 28);
             }
         });
     }
+
+    // ---------- Banner slideshow ----------
+    (function () {
+        var show = document.getElementById('bannerShow');
+        if (!show) return;
+        var slides = show.querySelectorAll('.slide');
+        if (slides.length <= 1) return;
+        var idx = 0;
+        var interval = <?= max(2, min(60, $bannerInterval)) ?> * 1000;
+        setInterval(function () {
+            slides[idx].classList.remove('active');
+            idx = (idx + 1) % slides.length;
+            slides[idx].classList.add('active');
+        }, interval);
+    })();
 
     // ---------- Renderers ----------
     function renderHouses(houses) {

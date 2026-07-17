@@ -138,6 +138,10 @@ class StandingsController extends Controller
             "SELECT name FROM institutions WHERE id = ?",
             [(int) $meet['campus_id']]
         );
+        $banners = array_map(
+            fn($b) => asset($b['image_path']),
+            (new \App\Models\MeetBanner())->forMeet((int) $meetId)
+        );
         $this->view('standings/live', [
             'meetId'           => (int) $meetId,
             'meetTitle'        => $meet['title'],
@@ -146,6 +150,8 @@ class StandingsController extends Controller
             'institutionLogo'  => !empty($meet['institution_logo_path']) ? asset($meet['institution_logo_path']) : '',
             'bannerImage'      => !empty($meet['banner_path']) ? asset($meet['banner_path']) : '',
             'scrollSpeed'      => (int) ($meet['winners_scroll_speed'] ?? 28),
+            'banners'          => $banners,
+            'bannerInterval'   => (int) ($meet['banner_interval'] ?? 6),
         ], null);
     }
 

@@ -97,6 +97,8 @@ $router->post('/meets/{meetId}/bulk/instances-import',  'MeetBulkController@inst
 $router->get('/meets/{meetId}/setup', 'MeetSetupController@show', ['auth']);
 $router->post('/meets/{meetId}/points', 'MeetSetupController@savePoints', ['auth']);
 $router->post('/meets/{meetId}/live-settings', 'MeetSetupController@saveLiveSettings', ['auth']);
+$router->post('/meets/{meetId}/banners', 'MeetSetupController@addBanner', ['auth']);
+$router->post('/meets/{meetId}/banners/{bannerId}/delete', 'MeetSetupController@deleteBanner', ['auth']);
 
 foreach (['disciplines' => 'Discipline', 'categories' => 'Category', 'events' => 'Event', 'instances' => 'Instance'] as $seg => $suffix) {
     $router->post("/meets/{meetId}/$seg",       "MeetSetupController@store$suffix",  ['auth']);
