@@ -205,7 +205,7 @@ $spanFull   = $formCols > 1 ? "sm:col-span-2 md:col-span-{$formCols}" : '';
                                 <div class="mt-2 flex flex-wrap gap-2" data-chips-list></div>
                             </div>
                         <?php else: ?>
-                            <input type="<?= e($field['type']) ?>" id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-input" data-field="<?= e($name) ?>" <?= !empty($field['placeholder']) ? 'placeholder="' . e($field['placeholder']) . '"' : '' ?>>
+                            <input type="<?= e($field['type']) ?>" id="f_<?= e($name) ?>" name="<?= e($name) ?>" class="form-input<?= !empty($field['readonly']) ? ' bg-slate-100 text-slate-500' : '' ?>" data-field="<?= e($name) ?>" <?= !empty($field['readonly']) ? 'readonly' : '' ?> <?= !empty($field['placeholder']) ? 'placeholder="' . e($field['placeholder']) . '"' : '' ?>>
                         <?php endif; ?>
                         <?php if (!empty($field['hint'])): ?><p class="mt-1 text-xs text-slate-500"><?= $field['hint'] ?></p><?php endif; ?>
                         <p class="form-error hidden" data-error="<?= e($name) ?>"></p>

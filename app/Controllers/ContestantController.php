@@ -71,7 +71,7 @@ class ContestantController extends CrudController
                 ['key' => 'status', 'label' => 'Status', 'type' => 'badge'],
             ],
             'fields' => [
-                ['name' => 'unique_number', 'label' => 'Unique Number', 'type' => 'text', 'required' => true],
+                ['name' => 'unique_number', 'label' => 'Unique Number', 'type' => 'text', 'readonly' => true, 'placeholder' => 'Auto-generated'],
                 ['name' => 'admission_number', 'label' => 'Admission Number', 'type' => 'text'],
                 ['name' => 'name', 'label' => 'Full Name', 'type' => 'text', 'required' => true],
                 ['name' => 'dob', 'label' => 'Date of Birth', 'type' => 'date'],
@@ -184,7 +184,18 @@ class ContestantController extends CrudController
             }
         }
 
-        $id = $this->model()->create($data);
+        // System-wide auto-incrementing unique number (retry on the rare race).
+        $id = null;
+        for ($attempt = 0; $id === null; $attempt++) {
+            $data['unique_number'] = $this->nextUniqueNumber();
+            try {
+                $id = $this->model()->create($data);
+            } catch (\PDOException $e) {
+                if ($attempt >= 5 || stripos($e->getMessage(), 'unique') === false) {
+                    throw $e;
+                }
+            }
+        }
         $this->syncRegistrations($id, $this->desiredInstanceIds());
         Audit::log('create', 'contestant_masters', $id, null, $data);
         $this->respond('Contestant created successfully.');
@@ -261,7 +272,7 @@ class ContestantController extends CrudController
     {
         $intOrNull = fn($v) => ($v === '' || $v === null) ? null : (int) $v;
         return [
-            'unique_number'   => Request::input('unique_number'),
+            // unique_number is auto-generated on create and never changed on edit.
             'admission_number'=> Request::input('admission_number') ?: null,
             'name'            => Request::input('name'),
             'dob'           => Request::input('dob') ?: null,
@@ -277,13 +288,21 @@ class ContestantController extends CrudController
         ];
     }
 
+    /** Next system-wide unique number (global sequence, not per campus/event). */
+    private function nextUniqueNumber(): string
+    {
+        // `unique_number + 0` coerces to the leading numeric value in MySQL and
+        // SQLite, so purely-numeric numbers advance and legacy text codes count as 0.
+        $max = (int) Database::instance()->scalar(
+            "SELECT COALESCE(MAX(unique_number + 0), 0) FROM contestant_masters"
+        );
+        return (string) ($max + 1);
+    }
+
     private function rules(bool $isEdit, ?int $id = null): array
     {
-        $unique = $isEdit
-            ? "unique:contestant_masters,unique_number,{$id}"
-            : 'unique:contestant_masters,unique_number';
+        // unique_number is system-generated, so it is not validated from input.
         return [
-            'unique_number'    => "required|max:50|{$unique}",
             'admission_number' => 'max:50',
             'name'             => 'required|max:150',
             'gender'        => 'in:M,F,O',
