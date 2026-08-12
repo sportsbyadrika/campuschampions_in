@@ -79,6 +79,7 @@ abstract class CrudController extends Controller
 
         $result = $this->query($cfg);
 
+        $showCampus = !empty($cfg['showCampus']) && Auth::isSuperAdmin();
         $this->view('crud/index', [
             'title'   => $cfg['entityPlural'],
             'cfg'     => $cfg,
@@ -87,6 +88,9 @@ abstract class CrudController extends Controller
             'search'  => (string) Request::get('q', ''),
             'canManage' => Auth::is(...$this->manageRoles),
             'canDelete' => Auth::is(...$this->deleteRoles()),
+            'campusOptions' => $showCampus
+                ? Database::instance()->fetchAll("SELECT id, name FROM institutions ORDER BY name")
+                : [],
         ]);
     }
 
@@ -154,7 +158,7 @@ abstract class CrudController extends Controller
         $cfg = $this->config();
         $data = $this->collect($cfg);
 
-        $validator = Validator::make($data, $cfg['rules'] ?? [], $cfg['labels'] ?? []);
+        $validator = Validator::make($data, $this->withCampusRule($cfg, $cfg['rules'] ?? []), $cfg['labels'] ?? []);
         if ($validator->fails()) {
             $this->json(['success' => false, 'errors' => $validator->firstErrors(), 'message' => 'Please correct the highlighted fields.'], 422);
         }
@@ -181,7 +185,7 @@ abstract class CrudController extends Controller
 
         $data = $this->collect($cfg, $id);
 
-        $validator = Validator::make($data, $this->rulesForUpdate($cfg, $id), $cfg['labels'] ?? []);
+        $validator = Validator::make($data, $this->withCampusRule($cfg, $this->rulesForUpdate($cfg, $id)), $cfg['labels'] ?? []);
         if ($validator->fails()) {
             $this->json(['success' => false, 'errors' => $validator->firstErrors(), 'message' => 'Please correct the highlighted fields.'], 422);
         }
@@ -274,7 +278,21 @@ abstract class CrudController extends Controller
             }
             $data[$name] = $value;
         }
+        // Super admin must pick the institution for campus-scoped entities.
+        if (!empty($cfg['showCampus']) && Auth::isSuperAdmin()) {
+            $campusId = (int) Request::input('campus_id');
+            $data['campus_id'] = $campusId > 0 ? $campusId : null;
+        }
         return $data;
+    }
+
+    /** Require campus_id when a super admin manages a campus-scoped entity. */
+    private function withCampusRule(array $cfg, array $rules): array
+    {
+        if (!empty($cfg['showCampus']) && Auth::isSuperAdmin()) {
+            $rules['campus_id'] = 'required';
+        }
+        return $rules;
     }
 
     /** Inject the current id into any `unique:` rule so it ignores itself. */

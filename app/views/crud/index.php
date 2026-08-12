@@ -152,6 +152,18 @@ $spanFull   = $formCols > 1 ? "sm:col-span-2 md:col-span-{$formCols}" : '';
             </div>
             <input type="hidden" name="id" id="crudId" value="">
             <div class="px-6 py-5 <?= $gridClass ?>">
+                <?php if (!empty($campusOptions ?? [])): ?>
+                    <div class="<?= $spanFull ?>">
+                        <label class="form-label" for="f_campus_id">Institution <span class="text-rose-500">*</span></label>
+                        <select id="f_campus_id" name="campus_id" class="form-select" data-field="campus_id">
+                            <option value="">— Select institution —</option>
+                            <?php foreach ($campusOptions as $ci): ?>
+                                <option value="<?= (int) $ci['id'] ?>"><?= e($ci['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="form-error hidden" data-error="campus_id"></p>
+                    </div>
+                <?php endif; ?>
                 <?php foreach ($cfg['fields'] as $field):
                     $name = $field['name'];
                     $req = !empty($field['required']);
