@@ -11,7 +11,7 @@ class Institution extends Model
     protected string $table = 'institutions';
     protected bool $campusScoped = false; // managed by super admin across all campuses
     protected array $fillable = [
-        'name', 'address', 'contact_email', 'contact_phone',
+        'name', 'institution_type_id', 'address', 'contact_email', 'contact_phone',
         'subscription_start_date', 'subscription_end_date', 'status',
     ];
 

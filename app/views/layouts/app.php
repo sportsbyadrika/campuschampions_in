@@ -62,6 +62,9 @@ $user = Auth::user();
                                 <a href="<?= e(url('divisions')) ?>" class="dropdown-item">Divisions</a>
                                 <a href="<?= e(url('houses')) ?>" class="dropdown-item">Houses</a>
                                 <a href="<?= e(url('course-category-groups')) ?>" class="dropdown-item">Category Groups</a>
+                                <?php if (can('super_admin')): ?>
+                                    <a href="<?= e(url('institution-types')) ?>" class="dropdown-item">Institution Types</a>
+                                <?php endif; ?>
                                 <div class="my-1 border-t border-slate-100"></div>
                                 <a href="<?= e(url('contestants')) ?>" class="dropdown-item">Contestants</a>
                                 <a href="<?= e(url('contestants/change-instance')) ?>" class="dropdown-item">Change Event Instance</a>
@@ -146,7 +149,7 @@ $user = Auth::user();
     <!-- Mobile nav -->
     <div class="md:hidden hidden border-t border-slate-200 px-4 py-2 space-y-1" id="mobileNav">
         <a href="<?= e(url('dashboard')) ?>" class="mobile-link">Dashboard</a>
-        <?php if (can('super_admin')): ?><a href="<?= e(url('institutions')) ?>" class="mobile-link">Institutions</a><?php endif; ?>
+        <?php if (can('super_admin')): ?><a href="<?= e(url('institutions')) ?>" class="mobile-link">Institutions</a><a href="<?= e(url('institution-types')) ?>" class="mobile-link">Institution Types</a><?php endif; ?>
         <?php if (can('super_admin', 'campus_admin')): ?>
             <a href="<?= e(url('courses')) ?>" class="mobile-link">Courses</a>
             <a href="<?= e(url('contestants')) ?>" class="mobile-link">Contestants</a>

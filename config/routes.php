@@ -64,6 +64,7 @@ $crud('houses',                  'HouseController');
 $crud('course-category-groups',  'CourseCategoryGroupController');
 $crud('users',                   'UserController');
 $crud('institutions',            'InstitutionController');
+$crud('institution-types',       'InstitutionTypeController');
 
 // Contestant bulk upload (register BEFORE the generic contestant CRUD so the
 // literal /contestants/bulk* paths are not shadowed).
